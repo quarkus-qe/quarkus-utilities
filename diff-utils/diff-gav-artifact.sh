@@ -19,7 +19,6 @@ wget -O artifacts_${QUARKUS_VERSION_OLD}.txt ${OLD_QUARKUS_BUILD_URL}/extras/rep
 cat artifacts_${QUARKUS_VERSION_NEW}.txt | cut -d: -f1,2 | tee artifacts_${QUARKUS_VERSION_NEW}_GA.txt
 cat artifacts_${QUARKUS_VERSION_OLD}.txt | cut -d: -f1,2 | tee artifacts_${QUARKUS_VERSION_OLD}_GA.txt
 
-
 echo 'get & unzip productized maven repo'
 wget -q -O quarkus-maven-repo.zip "http://download.eng.bos.redhat.com/rcm-guest/staging/quarkus/quarkus-platform-${QUARKUS_VERSION_NEW}/rh-quarkus-platform-${QUARKUS_VERSION_NEW}-maven-repository.zip"
 MAVEN_REPO_ROOT_DIR_NAME=$(unzip -Z -1 quarkus-maven-repo.zip | head -n 1 | cut -d '/' -f 1)
@@ -28,9 +27,6 @@ unzip -q quarkus-maven-repo.zip
 wget -O ~/.m2/settings.xml https://gitlab.cee.redhat.com/quarkus-qe/jenkins-jobs/-/raw/main/jobs/rhbq/files/settings.xml
 sed -i -e "s|/path_to_repo|$PWD/${MAVEN_REPO_ROOT_DIR_NAME}/maven-repository|" ~/.m2/settings.xml
 LOCAL_REPO="$(pwd)/${MAVEN_REPO_ROOT_DIR_NAME}/maven-repository/"
-
-./create_colorful_diff.sh diff-gav-artifacts.html artifacts_${QUARKUS_VERSION_OLD}_GA.txt artifacts_${QUARKUS_VERSION_NEW}_GA.txt
-rm artifacts_${QUARKUS_VERSION_OLD}_GA.txt artifacts_${QUARKUS_VERSION_NEW}_GA.txt
 
 while read line; do
   OLD_VERSION=`echo $line | cut -d: -f3`
@@ -69,23 +65,39 @@ while read line; do
   fi
 done < artifacts_${QUARKUS_VERSION_NEW}.txt
 
-# Dependencies print of new added artifacts
-mvn clean install exec:java -Dquarkus.maven.dir="$LOCAL_REPO" -Dquarkus.new-artifacts-list="added_artifacts_list.txt"
-mv added_artifacts_deps.txt artifacts_${QUARKUS_VERSION_NEW}_ADDED_WITH_DEPENDENTS.txt
-rm -f added_artifacts_list.txt
-
 cat artifacts_${QUARKUS_VERSION_NEW}_MULTIPLE.txt | sort | uniq > artifacts_${QUARKUS_VERSION_NEW}_MULTIPLE_TMP.txt
 mv artifacts_${QUARKUS_VERSION_NEW}_MULTIPLE_TMP.txt artifacts_${QUARKUS_VERSION_NEW}_MULTIPLE.txt
 while read line; do
   grep $line artifacts_${QUARKUS_VERSION_OLD}.txt >> artifacts_${QUARKUS_VERSION_OLD}_MULTIPLE_DETAILS.txt
   grep $line artifacts_${QUARKUS_VERSION_NEW}.txt >> artifacts_${QUARKUS_VERSION_NEW}_MULTIPLE_DETAILS.txt
 done < artifacts_${QUARKUS_VERSION_NEW}_MULTIPLE.txt
-./create_colorful_diff.sh diff-artifacts-with-multiple-versions.html artifacts_${QUARKUS_VERSION_OLD}_MULTIPLE_DETAILS.txt artifacts_${QUARKUS_VERSION_NEW}_MULTIPLE_DETAILS.txt
 
+# Dependencies print of new added artifacts
+mvn clean install exec:java -Dquarkus.maven.dir="$LOCAL_REPO" -Dquarkus.new-artifacts-list="added_artifacts_list.txt"
+mv added_artifacts_deps.txt artifacts_${QUARKUS_VERSION_NEW}_ADDED_WITH_DEPENDENTS.txt
+cat artifacts_${QUARKUS_VERSION_NEW}_ADDED_WITH_DEPENDENTS.txt | sed 's/\$/\\$/g' > added-artifacts-escape-dollars.txt
+rm -f added_artifacts_list.txt
+
+# Dependencies print of multiple artifacts
+mvn clean install exec:java -Dquarkus.maven.dir="$LOCAL_REPO" -Dquarkus.new-artifacts-list="artifacts_${QUARKUS_VERSION_NEW}_MULTIPLE.txt"
+mv added_artifacts_deps.txt artifacts_${QUARKUS_VERSION_NEW}_MULTIPLE_WITH_DEPENDENTS.txt
+cat artifacts_${QUARKUS_VERSION_NEW}_MULTIPLE_WITH_DEPENDENTS.txt | sed 's/\$/\\$/g' > multiple-artifacts-escape-dollars.txt
+
+cat added-artifacts-escape-dollars.txt multiple-artifacts-escape-dollars.txt > added-multiple-artifacts-escape-dollars.txt
+
+# HTML diff of added and multiple changed artifacts
+./create_colorful_diff.sh diff-gav-artifacts.html artifacts_${QUARKUS_VERSION_OLD}_GA.txt artifacts_${QUARKUS_VERSION_NEW}_GA.txt added-multiple-artifacts-escape-dollars.txt
+rm artifacts_${QUARKUS_VERSION_OLD}_GA.txt artifacts_${QUARKUS_VERSION_NEW}_GA.txt
+
+# HTML diff of multiple artifacts
+./create_colorful_diff.sh diff-artifacts-with-multiple-versions.html artifacts_${QUARKUS_VERSION_OLD}_MULTIPLE_DETAILS.txt artifacts_${QUARKUS_VERSION_NEW}_MULTIPLE_DETAILS.txt added-multiple-artifacts-escape-dollars.txt
 rm -f artifacts_${QUARKUS_VERSION_OLD}_MULTIPLE_DETAILS.txt artifacts_${QUARKUS_VERSION_NEW}_MULTIPLE_DETAILS.txt
 
 rm -f quarkus-maven-repo.zip
 rm -f ~/.m2/settings.xml
 rm -rf ${MAVEN_REPO_ROOT_DIR_NAME}
+rm -f added-multiple-artifacts-escape-dollars.txt
+rm -f multiple-artifacts-escape-dollars.txt
+rm -f added-artifacts-escape-dollars.txt
 
-wc -l artifacts_*.txt       
+wc -l artifacts_*.txt
