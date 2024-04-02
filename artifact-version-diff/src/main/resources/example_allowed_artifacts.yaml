@@ -1,0 +1,11 @@
+allowed-artifacts:
+  - artifact:
+      'com.aayushatharva.brotli4j:brotli4j'
+    allowed-rhbq-versions:
+      - 1.14.0.redhat-00001
+      - 1.15.0.redhat-00001
+  - artifact:
+      'net.java.dev.jna:jna-platform'
+    allowed-rhbq-versions:
+      - 5.8.0
+
