@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -23,6 +24,8 @@ import java.util.stream.Stream;
 import static io.quarkus.qe.PrepareOperation.VERSION_PLUGIN_OUTPUT_FILE_NAME;
 
 public class GenerateReport {
+
+    private static final Logger LOG = Logger.getLogger(GenerateReport.class.getName());
 
     public static final String HTML_BASE_START = """
             <!DOCTYPE html>
@@ -70,15 +73,26 @@ public class GenerateReport {
         createAllowedHashMap();
     }
 
+    /**
+     * Method load the generated files from versions plugin.
+     * Parse file to found the artifact and it's version.
+     * Version of the artifact are compared and if they are not the same the artifact and its version are added to map
+     * where the key is name of the artifact.
+     * <p>
+     * When map with artifacts which differ in version is loaded, simple and detailed html report is created.
+     */
     public void generateReport() {
         List<Path> dependencyDiffFiles = generateListOfDiffFiles();
+        // Pattern for artifact in format <groupID>:<artifactID>
+        Pattern artifactPattern = Pattern.compile("[\\w.-]+:[\\w.-]+");
+        // Pattern toma match version in format `<upstream_version> -> <downstream_version>`
+        Pattern versionsPattern = Pattern.compile("[\\S\\d.]+.->.+");
 
         for (Path path : dependencyDiffFiles) {
-
             try (Stream<String> lines = Files.lines(path)) {
                 lines.forEach(line -> {
-                    Pattern artifactPattern = Pattern.compile("[\\w.-]+:[\\w.-]+");
-                    Pattern versionsPattern = Pattern.compile("[\\S\\d.]+.->.+");
+                    // Check the line of file which was generated from versions plugin
+                    // Line should contain artifact and version in format <groupID>:<artifactID> .... <upstream_version> -> <downstream_version>
                     Matcher artifactMatcher = artifactPattern.matcher(line);
                     Matcher versionsMatcher = versionsPattern.matcher(line);
                     if (artifactMatcher.matches() && !versionsMatcher.matches()) {
@@ -86,8 +100,7 @@ public class GenerateReport {
                     }
                     if (artifactMatcher.find() && versionsMatcher.find()) {
                         String versionsTogether = versionsMatcher.group();
-                        String[] versions = versionsTogether.replaceAll("\\s+", "").split("->");
-                        if (!versionComparator(versions[0], versions[1])) {
+                        if (!Artifact.versionComparator(versionsTogether)) {
                             String artifact = artifactMatcher.group();
                             addToDifferentArtifacts(artifact,
                                     path.toString().replace(quarkusRepoDirectory.toString(), "").replace(VERSION_PLUGIN_OUTPUT_FILE_NAME, ""),
@@ -96,7 +109,7 @@ public class GenerateReport {
                     }
                 });
             } catch (IOException e) {
-               throw new RuntimeException("Error when reading diff file lines for different dependencies. Error log: " + e);
+                throw new RuntimeException("Error when reading diff file lines for different dependencies. Error log: " + e);
             }
         }
         generateSimpleOverview();
@@ -121,6 +134,7 @@ public class GenerateReport {
                 </tr>
                 """;
 
+        LOG.info("Generating simple diff report");
         try(FileWriter fw = new FileWriter("outputDiff.html")) {
             fw.write(HTML_BASE_START);
             fw.write(tableHeader);
@@ -160,6 +174,7 @@ public class GenerateReport {
                 </tr>
                 """;
 
+        LOG.info("Generating detailed diff report");
         try(FileWriter fw = new FileWriter("outputDiffDetailed.html")) {
             fw.write(HTML_BASE_START);
             fw.write(tableHeader);
@@ -198,31 +213,11 @@ public class GenerateReport {
     }
 
     /**
-     * Comparing version if they are the same.
-     * Also modify them as they are differences between upstream and productized artifact
-     * @param upstreamVersion Version of upstream artifact
-     * @param downstreamVersion version of downstream artifact
-     * @return false if the version are not the same
+     * Add second version to the different artifacts map or create new entry in map
+     * @param artifact artifact name which is used as key in map
+     * @param location is path what is the affected extension
+     * @param versions upstream and downstream versions together
      */
-    public boolean versionComparator(String upstreamVersion, String downstreamVersion) {
-        String version = upstreamVersion.replace("-alpha", ".alpha");
-
-        // match any artifact which have only major and minor version
-        Pattern pattern = Pattern.compile("^(\\d+\\.\\d+$)");
-        Matcher matcher = pattern.matcher(version);
-        // match any artifact which have only major and minor version and some suffix
-        Pattern pattern2 = Pattern.compile("^(\\d+\\.\\d+((\\.|-)\\D))");
-        Matcher matcher2 = pattern2.matcher(version);
-        if (matcher.find()) {
-            version += ".0";
-        }
-        if (matcher2.find()) {
-            String versionHelper = matcher2.group();
-            version = version.substring(0, versionHelper.length() -2) + ".0" + version.substring(versionHelper.length() -2);
-        }
-        return downstreamVersion.contains(version);
-    }
-
     public void addToDifferentArtifacts(String artifact, String location, String versions) {
         if(differentArtifacts.containsKey(artifact)) {
             differentArtifacts.get(artifact).addArtifactVersionAndLocation(location, versions);
