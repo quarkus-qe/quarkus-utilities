@@ -20,6 +20,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import static io.quarkus.qe.PrepareOperation.VERSION_PLUGIN_OUTPUT_FILE_NAME;
+
 public class GenerateReport {
 
     public static final String HTML_BASE_START = """
@@ -61,13 +63,14 @@ public class GenerateReport {
     private boolean majorMinorVersionDiffer = false;
     private boolean patchOrOthersVersionDiffer = false;
 
-    public GenerateReport() {
+    private final Path quarkusRepoDirectory;
+
+    public GenerateReport(Path quarkusRepoDirectory) {
+        this.quarkusRepoDirectory = quarkusRepoDirectory;
         createAllowedHashMap();
     }
 
     public void generateReport() {
-        String basePath = Objects.requireNonNull(System.getProperty("path-to-quarkus-repository"));
-        String versionDiffOutputFileName = Objects.requireNonNull(System.getProperty("version-plugin.report-output-file"));
         List<Path> dependencyDiffFiles = generateListOfDiffFiles();
 
         for (Path path : dependencyDiffFiles) {
@@ -87,7 +90,7 @@ public class GenerateReport {
                         if (!versionComparator(versions[0], versions[1])) {
                             String artifact = artifactMatcher.group();
                             addToDifferentArtifacts(artifact,
-                                    path.toString().replace(basePath, "").replace(versionDiffOutputFileName, ""),
+                                    path.toString().replace(quarkusRepoDirectory.toString(), "").replace(VERSION_PLUGIN_OUTPUT_FILE_NAME, ""),
                                     versionsTogether);
                         }
                     }
@@ -181,17 +184,13 @@ public class GenerateReport {
      * @return List of paths to generated files
      */
     public List<Path> generateListOfDiffFiles() {
-        String basePath = Objects.requireNonNull(System.getProperty("path-to-quarkus-repository"));
-        String versionDiffOutputFileName = Objects.requireNonNull(System.getProperty("version-plugin.report-output-file"));
-        Path basePathToQuarkusRepository = Path.of(basePath);
-
-        try (Stream<Path> entries = Files.walk(basePathToQuarkusRepository)) {
+        try (Stream<Path> entries = Files.walk(quarkusRepoDirectory)) {
             return entries.filter(Files::isRegularFile)
-                    .filter(f -> f.getFileName().toString().contains(versionDiffOutputFileName) &&
-                            (f.toAbsolutePath().toString().contains(basePathToQuarkusRepository + File.separator + "bom") ||
-                                    f.toAbsolutePath().toString().contains(basePathToQuarkusRepository + File.separator + "core") ||
-                                    f.toAbsolutePath().toString().contains(basePathToQuarkusRepository + File.separator + "extensions") ||
-                                    f.toAbsolutePath().toString().contains(basePathToQuarkusRepository + File.separator + "test-framework")))
+                    .filter(f -> f.getFileName().toString().contains(VERSION_PLUGIN_OUTPUT_FILE_NAME) &&
+                            (f.toAbsolutePath().toString().contains(quarkusRepoDirectory + File.separator + "bom") ||
+                                    f.toAbsolutePath().toString().contains(quarkusRepoDirectory + File.separator + "core") ||
+                                    f.toAbsolutePath().toString().contains(quarkusRepoDirectory + File.separator + "extensions") ||
+                                    f.toAbsolutePath().toString().contains(quarkusRepoDirectory + File.separator + "test-framework")))
                     .toList();
         } catch (IOException e) {
             throw new RuntimeException("Error when generating list of diff files. Error log: " + e);
