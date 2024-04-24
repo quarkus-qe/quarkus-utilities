@@ -1,0 +1,29 @@
+allowed-artifacts:
+  - artifact:
+      'io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations-support'
+    allowed-rhbq-versions:
+      - 1.32.0.redhat-00001
+  - artifact:
+      'io.opentelemetry.instrumentation:opentelemetry-instrumentation-api-semconv'
+    allowed-rhbq-versions:
+      - 1.32.0.redhat-00001
+  - artifact:
+      'net.java.dev.jna:jna-platform'
+    allowed-rhbq-versions:
+      - 5.8.0
+  - artifact:
+      'org.apache.kafka:kafka-clients'
+    allowed-rhbq-versions:
+      - 3.6.0.redhat-00006
+  - artifact:
+      'org.apache.kafka:kafka-streams'
+    allowed-rhbq-versions:
+      - 3.6.0.redhat-00006
+  - artifact:
+      'org.apache.kafka:kafka-streams-test-utils'
+    allowed-rhbq-versions:
+      - 3.6.0
+  - artifact:
+      'org.apache.kafka:kafka_2.13'
+    allowed-rhbq-versions:
+      - 3.6.0.redhat-00006
