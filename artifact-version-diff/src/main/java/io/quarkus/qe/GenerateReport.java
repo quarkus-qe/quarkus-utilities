@@ -242,6 +242,14 @@ public class GenerateReport {
         DefaultArtifactVersion downstreamMajorMinor = new DefaultArtifactVersion(downstream.getMajorVersion() + "." +
                 downstream.getMinorVersion());
 
+        // If the productized version is to complicated (graal-sdk for example 23.1.2.0-3-redhat-00001) `DefaultArtifactVersion`
+        // not parse major and minor version correctly but get these values to 0.0
+        // This check manually get major and minor version from productized version
+        if (downstream.getMajorVersion() == 0 && downstream.getMinorVersion() == 0) {
+            String[] complicateVersion = versions[1].split("\\.");
+            downstreamMajorMinor = new DefaultArtifactVersion(complicateVersion[0] + "." + complicateVersion[1]);
+        }
+
         int versionComparison = upstreamMajorMinor.compareTo(downstreamMajorMinor);
         if (allowedArtifacts != null && versionComparison < 0) {
             isAllowedWithDifferentVersion(true, artifact, versions[1]);
