@@ -1,0 +1,106 @@
+allowed-artifacts:
+  - artifact:
+      'com.aayushatharva.brotli4j:brotli4j'
+    allowed-rhbq-versions:
+      - 1.12.0.redhat-00005
+  - artifact:
+      'com.google.guava:guava'
+    allowed-rhbq-versions:
+      - 32.0.1.jre-redhat-00001
+  - artifact:
+      'io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations-support'
+    allowed-rhbq-versions:
+      - 1.25.0.redhat-00001
+  - artifact:
+      'io.opentelemetry.instrumentation:opentelemetry-instrumentation-api-semconv'
+    allowed-rhbq-versions:
+      - 1.25.0.redhat-00001
+  - artifact:
+      'io.opentelemetry:opentelemetry-api-events'
+    allowed-rhbq-versions:
+      - 1.25.0.redhat-00002
+  - artifact:
+      'io.opentelemetry:opentelemetry-api-logs'
+    allowed-rhbq-versions:
+      - 1.25.0.redhat-00002
+  - artifact:
+      'io.opentelemetry:opentelemetry-exporter-otlp-logs'
+    allowed-rhbq-versions:
+      - 1.25.0.redhat-00002
+  - artifact:
+      'io.opentelemetry:opentelemetry-exporter-prometheus'
+    allowed-rhbq-versions:
+      - 1.25.0.redhat-00002
+  - artifact:
+      'io.opentelemetry:opentelemetry-extension-incubator'
+    allowed-rhbq-versions:
+      - 1.25.0.redhat-00002
+  - artifact:
+      'io.opentelemetry:opentelemetry-opencensus-shim'
+    allowed-rhbq-versions:
+      - 1.25.0.redhat-00002
+  - artifact:
+      'io.opentelemetry:opentelemetry-opentracing-shim'
+    allowed-rhbq-versions:
+      - 1.25.0.redhat-00002
+  - artifact:
+      'io.opentelemetry:opentelemetry-sdk-extension-autoconfigure'
+    allowed-rhbq-versions:
+      - 1.25.0.redhat-00002
+  - artifact:
+      'io.opentelemetry:opentelemetry-sdk-extension-incubator'
+    allowed-rhbq-versions:
+      - 1.25.0.redhat-00002
+  - artifact:
+      'io.opentelemetry:opentelemetry-sdk-logs'
+    allowed-rhbq-versions:
+      - 1.25.0.redhat-00002
+  - artifact:
+      'io.opentelemetry:opentelemetry-sdk-logs-testing'
+    allowed-rhbq-versions:
+      - 1.25.0.redhat-00002
+  - artifact:
+      'io.opentelemetry:opentelemetry-semconv'
+    allowed-rhbq-versions:
+      - 1.25.0.redhat-00002
+  - artifact:
+      'net.java.dev.jna:jna-platform'
+    allowed-rhbq-versions:
+      - 5.8.0
+  - artifact:
+      'org.graalvm.nativeimage:svm'
+    allowed-rhbq-versions:
+      - 23.0.2.0-1-redhat-00001
+  - artifact:
+      'org.graalvm.sdk:graal-sdk'
+    allowed-rhbq-versions:
+      - 23.0.2.0-1-redhat-00001
+  - artifact:
+      'org.keycloak:keycloak-adapter-core'
+    allowed-rhbq-versions:
+      - 22.0.6.redhat-00002
+  - artifact:
+      'org.keycloak:keycloak-adapter-spi'
+    allowed-rhbq-versions:
+      - 22.0.6.redhat-00002
+  - artifact:
+      'org.keycloak:keycloak-admin-client'
+    allowed-rhbq-versions:
+      - 22.0.6.redhat-00002
+  - artifact:
+      'org.keycloak:keycloak-authz-client'
+    allowed-rhbq-versions:
+      - 22.0.6.redhat-00002
+  - artifact:
+      'org.keycloak:keycloak-common'
+    allowed-rhbq-versions:
+      - 22.0.6.redhat-00002
+  - artifact:
+      'org.keycloak:keycloak-core'
+    allowed-rhbq-versions:
+      - 22.0.6.redhat-00002
+  - artifact:
+      'org.keycloak:keycloak-policy-enforcer'
+    allowed-rhbq-versions:
+      - 22.0.6.redhat-00002
+
