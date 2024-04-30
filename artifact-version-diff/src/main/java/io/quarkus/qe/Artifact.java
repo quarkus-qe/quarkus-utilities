@@ -52,7 +52,8 @@ public class Artifact {
         String[] versions = versionsTogether.replaceAll("\\s+", "").split("->");
 
         // prod creating artifact in format major.minor.patch.redhat-NNNNN or major.minor.patch.suffix-redhat-NNNNN
-        String version = versions[0].replaceFirst("-", ".");
+        // Change from `-` to `.` is happening only when the number is before `-`
+        String version = versions[0].replaceFirst("(?<=\\d)-", ".");
 
         // match any artifact which have only major and minor version
         Pattern pattern = Pattern.compile("^(\\d+\\.\\d+$)");
