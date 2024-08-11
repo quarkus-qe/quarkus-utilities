@@ -8,4 +8,9 @@ allowed-artifacts:
       'net.java.dev.jna:jna-platform'
     allowed-rhbq-versions:
       - 5.8.0
+allowed-missing-artifacts-bom-comparison:
+  - io.quarkus:quarkus-rest-client-mutiny
+allowed-extra-artifacts-bom-comparison:
+  - com.aayushatharva.brotli4j:native-linux-ppc64le
+  - io.netty:netty-transport-native-epoll-ppcle
 

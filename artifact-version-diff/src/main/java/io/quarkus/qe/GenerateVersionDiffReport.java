@@ -1,20 +1,14 @@
 package io.quarkus.qe;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.TreeMap;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
@@ -23,9 +17,9 @@ import java.util.stream.Stream;
 
 import static io.quarkus.qe.PrepareOperation.VERSION_PLUGIN_OUTPUT_FILE_NAME;
 
-public class GenerateReport {
+public class GenerateVersionDiffReport {
 
-    private static final Logger LOG = Logger.getLogger(GenerateReport.class.getName());
+    private static final Logger LOG = Logger.getLogger(GenerateVersionDiffReport.class.getName());
 
     public static final String HTML_BASE_START = """
             <!DOCTYPE html>
@@ -58,7 +52,6 @@ public class GenerateReport {
             </div>
             </body>
             </html>""";
-    public static final String ALLOWED_ARTIFACTS_BASE = "_allowed_artifacts.yaml";
     public TreeMap<String, Artifact> differentArtifacts = new TreeMap<>();
 
     Map<String, List<String>> allowedArtifacts;
@@ -68,9 +61,9 @@ public class GenerateReport {
 
     private final Path quarkusRepoDirectory;
 
-    public GenerateReport(Path quarkusRepoDirectory) {
+    public GenerateVersionDiffReport(Path quarkusRepoDirectory, AllowedArtifacts allowedArtifactsFile) {
         this.quarkusRepoDirectory = quarkusRepoDirectory;
-        createAllowedHashMap();
+        this.allowedArtifacts = PrepareOperation.createAllowedHashMap(allowedArtifactsFile);
     }
 
     /**
@@ -301,34 +294,6 @@ public class GenerateReport {
             majorMinorVersionDiffer = true;
         } else {
             patchOrOthersVersionDiffer = true;
-        }
-    }
-
-    /**
-     * Creating the hashmap with artifacts and version which are allowed to have different version from upstream
-     */
-    public void createAllowedHashMap() {
-        String quarkusVersion = Objects.requireNonNullElse(System.getProperty("quarkus-version"), "");
-        if (quarkusVersion.isBlank()) {
-            return;
-        }
-        allowedArtifacts = new HashMap<>();
-        String resourceName = "/" + quarkusVersion + ALLOWED_ARTIFACTS_BASE;
-        try {
-            InputStream inputStream = this.getClass().getResourceAsStream(resourceName);
-            ObjectMapper om = new ObjectMapper(new YAMLFactory());
-            AllowedArtifacts allowedArtifactList = om.readValue(inputStream, AllowedArtifacts.class);
-
-            for (AllowedArtifacts.AllowedArtifact allowedArtifact : allowedArtifactList.getAllowedArtifact()) {
-                if (!allowedArtifacts.containsKey(allowedArtifact.getArtifact())) {
-                    allowedArtifacts.put(allowedArtifact.getArtifact(), new ArrayList<>());
-                }
-                for (String version : allowedArtifact.getRhbqVersions()) {
-                    allowedArtifacts.get(allowedArtifact.getArtifact()).add(version);
-                }
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Error when loading allowed file " + resourceName + ". Log trace:", e);
         }
     }
 

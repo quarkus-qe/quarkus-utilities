@@ -1,4 +1,4 @@
-allowed-artifacts:
+allowed-artifacts-version-comparison:
   - artifact:
       'com.aayushatharva.brotli4j:brotli4j'
     allowed-rhbq-versions:

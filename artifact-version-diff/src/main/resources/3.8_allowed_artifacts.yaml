@@ -1,5 +1,5 @@
-allowed-artifacts:
-  - artifact:  ## https://issues.redhat.com/browse/QUARKUS-4119
+allowed-artifacts-version-comparison:
+  - artifact: ## https://issues.redhat.com/browse/QUARKUS-4119
       'net.java.dev.jna:jna-platform'
     allowed-rhbq-versions:
       - 5.8.0

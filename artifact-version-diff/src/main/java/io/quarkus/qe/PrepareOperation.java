@@ -1,14 +1,19 @@
 package io.quarkus.qe;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Logger;
 
@@ -17,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class PrepareOperation {
 
     public static final String VERSION_PLUGIN_OUTPUT_FILE_NAME = "depDiffs.txt";
+    public static final String ALLOWED_ARTIFACTS_BASE = "_allowed_artifacts.yaml";
     private static final Logger LOG = Logger.getLogger(PrepareOperation.class.getName());
 
     /**
@@ -77,6 +83,83 @@ public class PrepareOperation {
         extraProperties.add("-DreportOutputFile=" + VERSION_PLUGIN_OUTPUT_FILE_NAME);
 
         return extraProperties;
+    }
+
+    /**
+     * Check for maven.repo.local property to propagated it. If the property is not set the default M2 home
+     * @return String path to local repository
+     */
+    public static String getLocalRepository() {
+        String localRepo = Objects.requireNonNullElse(System.getProperty("maven.repo.local"), "");
+        if (localRepo.isEmpty()) {
+            localRepo = Paths.get(System.getProperty("user.home"), ".m2", "repository").toString();
+        }
+        return localRepo;
+    }
+
+    /**
+     * Download the upstream platform bom and return its path
+     * @return path to downloaded platform bom
+     */
+    public static Path getUpstreamBom() {
+        LOG.info("Executing mvn dependency:get");
+        String version = Objects.requireNonNull(System.getProperty("quarkus.repo.tag"), "The quarkus.platform.bom wasn't set.");
+
+        List<String> mvnVersionsExecute = new ArrayList<>(
+                Arrays.asList("mvn", "dependency:get", "-Dartifact=io.quarkus.platform:quarkus-bom:" + version + ":pom",
+                        "-Dmaven.repo.local=" + getLocalRepository()));
+        executeProcess(mvnVersionsExecute, "Failed to execute dependency:get for downloading upstream platform bom.",
+                Paths.get("").toAbsolutePath());
+
+        return Paths.get(getLocalRepository(), "io", "quarkus", "platform", "quarkus-bom", version, "quarkus-bom-" + version + ".pom");
+    }
+
+    /**
+     * Get RHBQ platform bom from local repository and return its path
+     * @return path to platform bom
+     */
+    public static Path getRHBQBom() {
+        String platformBom = Objects.requireNonNull(System.getProperty("quarkus.platform.bom"), "The quarkus.platform.bom wasn't set.");
+        String version = platformBom.substring(platformBom.lastIndexOf(":") + 1);
+        return Paths.get(getLocalRepository(), "com", "redhat", "quarkus", "platform", "quarkus-bom", version, "quarkus-bom-" + version + ".pom");
+    }
+
+    /**
+     * Creating the hashmap with artifacts and version which are allowed to have different version from upstream
+     */
+    public static Map<String, List<String>> createAllowedHashMap(AllowedArtifacts loadedAllowedArtifacts) {
+        if (loadedAllowedArtifacts == null) {
+            return null;
+        }
+        Map<String, List<String>> allowedArtifacts = new HashMap<>();
+        for (AllowedArtifacts.AllowedArtifact allowedArtifact : loadedAllowedArtifacts.getVersionComparisonsArtifacts()) {
+            if (!allowedArtifacts.containsKey(allowedArtifact.getArtifact())) {
+                allowedArtifacts.put(allowedArtifact.getArtifact(), new ArrayList<>());
+            }
+            for (String version : allowedArtifact.getRhbqVersions()) {
+                allowedArtifacts.get(allowedArtifact.getArtifact()).add(version);
+            }
+        }
+        return allowedArtifacts;
+    }
+
+    /**
+     * Load allowed artifact file as object for check if some artifacts are allowed
+     * @return loaded yaml file as object
+     */
+    public static AllowedArtifacts loadAllowedArtifactFile() {
+        String quarkusVersion = Objects.requireNonNullElse(System.getProperty("quarkus-version"), "");
+        if (quarkusVersion.isBlank()) {
+            return null;
+        }
+        String resourceName = "/" + quarkusVersion + ALLOWED_ARTIFACTS_BASE;
+        try {
+            InputStream inputStream = PrepareOperation.class.getResourceAsStream(resourceName);
+            ObjectMapper om = new ObjectMapper(new YAMLFactory());
+            return om.readValue(inputStream, AllowedArtifacts.class);
+        } catch (IOException e) {
+            throw new RuntimeException("Error when loading allowed file " + resourceName + ". Log trace:", e);
+        }
     }
 
 }
