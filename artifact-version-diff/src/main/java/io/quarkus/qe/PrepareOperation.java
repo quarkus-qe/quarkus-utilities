@@ -25,6 +25,9 @@ public class PrepareOperation {
     public static final String ALLOWED_ARTIFACTS_BASE = "_allowed_artifacts.yaml";
     private static final Logger LOG = Logger.getLogger(PrepareOperation.class.getName());
 
+    public static String rhbqVersion;
+    public static String upstreamVersion;
+
     /**
      * Clone Quarkus repository with specific tag and execute `mvn versions:compare-dependencies`
      * @return path to directory which include Quarkus
@@ -103,15 +106,15 @@ public class PrepareOperation {
      */
     public static Path getUpstreamBom() {
         LOG.info("Executing mvn dependency:get");
-        String version = Objects.requireNonNull(System.getProperty("quarkus.repo.tag"), "The quarkus.platform.bom wasn't set.");
+        upstreamVersion = Objects.requireNonNull(System.getProperty("quarkus.repo.tag"), "The quarkus.platform.bom wasn't set.");
 
         List<String> mvnVersionsExecute = new ArrayList<>(
-                Arrays.asList("mvn", "dependency:get", "-Dartifact=io.quarkus.platform:quarkus-bom:" + version + ":pom",
+                Arrays.asList("mvn", "dependency:get", "-Dartifact=io.quarkus.platform:quarkus-bom:" + upstreamVersion + ":pom",
                         "-Dmaven.repo.local=" + getLocalRepository()));
         executeProcess(mvnVersionsExecute, "Failed to execute dependency:get for downloading upstream platform bom.",
                 Paths.get("").toAbsolutePath());
 
-        return Paths.get(getLocalRepository(), "io", "quarkus", "platform", "quarkus-bom", version, "quarkus-bom-" + version + ".pom");
+        return Paths.get(getLocalRepository(), "io", "quarkus", "platform", "quarkus-bom", upstreamVersion, "quarkus-bom-" + upstreamVersion + ".pom");
     }
 
     /**
@@ -120,8 +123,8 @@ public class PrepareOperation {
      */
     public static Path getRHBQBom() {
         String platformBom = Objects.requireNonNull(System.getProperty("quarkus.platform.bom"), "The quarkus.platform.bom wasn't set.");
-        String version = platformBom.substring(platformBom.lastIndexOf(":") + 1);
-        return Paths.get(getLocalRepository(), "com", "redhat", "quarkus", "platform", "quarkus-bom", version, "quarkus-bom-" + version + ".pom");
+        rhbqVersion = platformBom.substring(platformBom.lastIndexOf(":") + 1);
+        return Paths.get(getLocalRepository(), "com", "redhat", "quarkus", "platform", "quarkus-bom", rhbqVersion, "quarkus-bom-" + rhbqVersion + ".pom");
     }
 
     /**
@@ -161,5 +164,4 @@ public class PrepareOperation {
             throw new RuntimeException("Error when loading allowed file " + resourceName + ". Log trace:", e);
         }
     }
-
 }

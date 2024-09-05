@@ -5,6 +5,7 @@ import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Logger;
@@ -35,11 +36,15 @@ public class GeneratePomComparison {
                 }
             </style>
             <body>
+            <div><h1>Compared Quarkus versions substitute-quarkus-upstream vs substitute-quarkus-rhbq</h1></div>
             <div>""";
 
     public static final String HTML_BASE_END = """
             </div>
             </body>
+            <footer>
+                <p>Generated on substitute-date</p>
+            </footer>
             </html>""";
     public String template = """
                 <tr>
@@ -63,19 +68,20 @@ public class GeneratePomComparison {
     public void generatePomComparisonReport() {
         LOG.info("Generating platform bom comparison report");
         try(FileWriter fw = new FileWriter("platformBomComparison.html")) {
-            fw.write(HTML_BASE_START);
+            fw.write(HTML_BASE_START.replace("substitute-quarkus-upstream", PrepareOperation.upstreamVersion)
+                    .replace("substitute-quarkus-rhbq", PrepareOperation.rhbqVersion));
 
-            fw.write("<h1>RHBQ BOM - missing artifacts</h1>\n<table>");
+            fw.write("<h2>RHBQ BOM - missing artifacts</h2>\n<table>");
             fw.write(generateDifferArtifacts(pomComparator.getMissingDependencies(),
                     allowedArtifactsFile != null ? allowedArtifactsFile.getBomComparisonsMissingArtifacts() : null));
             fw.write("</table>");
 
-            fw.write("<h1>RHBQ BOM - extra artifacts</h1>\n<table>");
+            fw.write("<h2>RHBQ BOM - extra artifacts</h2>\n<table>");
             fw.write(generateDifferArtifacts(pomComparator.getExtraDependencies(),
                     allowedArtifactsFile != null ? allowedArtifactsFile.getBomComparisonsExtraArtifacts() : null));
             fw.write("</table>");
 
-            fw.write(HTML_BASE_END);
+            fw.write(HTML_BASE_END.replace("substitute-date", new SimpleDateFormat("dd/MM/yyyy HH:mm:ss.SSS").format(new java.util.Date())));
         } catch (IOException e) {
             throw new RuntimeException("Unable to save output file. Log: " + e);
         }

@@ -7,6 +7,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -44,6 +45,7 @@ public class GenerateVersionDiffReport {
                 }
             </style>
             <body>
+            <div><h1>Compared Quarkus versions substitute-quarkus-upstream vs substitute-quarkus-rhbq</h1></div>
             <div>
                 <table>""";
 
@@ -51,6 +53,9 @@ public class GenerateVersionDiffReport {
                 </table>
             </div>
             </body>
+            <footer>
+                <p>Generated on substitute-date</p>
+            </footer>
             </html>""";
     public TreeMap<String, Artifact> differentArtifacts = new TreeMap<>();
 
@@ -129,7 +134,8 @@ public class GenerateVersionDiffReport {
 
         LOG.info("Generating simple diff report");
         try(FileWriter fw = new FileWriter("outputDiff.html")) {
-            fw.write(HTML_BASE_START);
+            fw.write(HTML_BASE_START.replace("substitute-quarkus-upstream", PrepareOperation.upstreamVersion)
+                    .replace("substitute-quarkus-rhbq", PrepareOperation.rhbqVersion));
             fw.write(tableHeader);
             for (String artifact : differentArtifacts.keySet()) {
                 List<String> versions = differentArtifacts.get(artifact).getDifferentVersions();
@@ -141,7 +147,7 @@ public class GenerateVersionDiffReport {
                     fw.write(writeCol);
                 }
             }
-            fw.write(HTML_BASE_END);
+            fw.write(HTML_BASE_END.replace("substitute-date", new SimpleDateFormat("dd/MM/yyyy HH:mm:ss.SSS").format(new java.util.Date())));
         } catch (IOException e) {
             throw new RuntimeException("Unable to save output file. Log: " + e);
         }
@@ -169,7 +175,8 @@ public class GenerateVersionDiffReport {
 
         LOG.info("Generating detailed diff report");
         try(FileWriter fw = new FileWriter("outputDiffDetailed.html")) {
-            fw.write(HTML_BASE_START);
+            fw.write(HTML_BASE_START.replace("substitute-quarkus-upstream", PrepareOperation.upstreamVersion)
+                    .replace("substitute-quarkus-rhbq", PrepareOperation.rhbqVersion));
             fw.write(tableHeader);
             for (String artifact : differentArtifacts.keySet()) {
                 List<String> versions = differentArtifacts.get(artifact).getDifferentVersions();
@@ -181,7 +188,7 @@ public class GenerateVersionDiffReport {
                     fw.write(writeColl);
                 }
             }
-            fw.write(HTML_BASE_END);
+            fw.write(HTML_BASE_END.replace("substitute-date", new SimpleDateFormat("dd/MM/yyyy HH:mm:ss.SSS").format(new java.util.Date())));
         } catch (IOException e) {
             throw new RuntimeException("Unable to save output file. Log: " + e);
         }
