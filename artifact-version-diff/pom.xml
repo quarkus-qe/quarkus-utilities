@@ -18,6 +18,7 @@
         <version.exec-maven-plugin>3.2.0</version.exec-maven-plugin>
         <version.jackson-dataformat-yaml>2.17.0</version.jackson-dataformat-yaml>
         <version.maven-surefire-plugin>3.2.5</version.maven-surefire-plugin>
+        <version.maven-model>3.9.8</version.maven-model>
     </properties>
 
     <dependencyManagement>
@@ -42,6 +43,11 @@
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-yaml</artifactId>
             <version>${version.jackson-dataformat-yaml}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-model</artifactId>
+            <version>${version.maven-model}</version>
         </dependency>
         <dependency>
             <groupId>org.junit.platform</groupId>

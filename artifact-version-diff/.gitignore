@@ -1,0 +1,19 @@
+# Eclipse
+.project
+.classpath
+.settings/
+bin/
+
+# IntelliJ
+.idea
+*.ipr
+*.iml
+*.iws
+
+# Maven
+target/
+
+# Genarated files
+outputDiff.html
+outputDiffDetailed.html
+platformBomComparison.html

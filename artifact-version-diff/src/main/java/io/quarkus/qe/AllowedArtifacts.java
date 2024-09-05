@@ -10,18 +10,39 @@ import java.util.List;
  */
 public class AllowedArtifacts {
 
-    @JsonProperty("allowed-artifacts")
-    private List<AllowedArtifact> allowedArtifact;
+    @JsonProperty("allowed-artifacts-version-comparison")
+    private List<AllowedArtifact> versionComparisonsArtifacts;
+    @JsonProperty("allowed-missing-artifacts-bom-comparison")
+    private List<String> bomComparisonsMissingArtifacts;
+    @JsonProperty("allowed-extra-artifacts-bom-comparison")
+    private List<String> bomComparisonsExtraArtifacts;
 
     public AllowedArtifacts() {
     }
 
-    public List<AllowedArtifact> getAllowedArtifact() {
-        return allowedArtifact;
+    public List<AllowedArtifact> getVersionComparisonsArtifacts() {
+        return versionComparisonsArtifacts;
     }
 
-    public void setAllowedArtifact(List<AllowedArtifact> allowedArtifact) {
-        this.allowedArtifact = allowedArtifact;
+    public void setVersionComparisonsArtifacts(
+            List<AllowedArtifact> versionComparisonsArtifacts) {
+        this.versionComparisonsArtifacts = versionComparisonsArtifacts;
+    }
+
+    public List<String> getBomComparisonsMissingArtifacts() {
+        return bomComparisonsMissingArtifacts;
+    }
+
+    public void setBomComparisonsMissingArtifacts(List<String> bomComparisonsMissingArtifacts) {
+        this.bomComparisonsMissingArtifacts = bomComparisonsMissingArtifacts;
+    }
+
+    public List<String> getBomComparisonsExtraArtifacts() {
+        return bomComparisonsExtraArtifacts;
+    }
+
+    public void setBomComparisonsExtraArtifacts(List<String> bomComparisonsExtraArtifacts) {
+        this.bomComparisonsExtraArtifacts = bomComparisonsExtraArtifacts;
     }
 
     public static class AllowedArtifact {
@@ -29,7 +50,7 @@ public class AllowedArtifacts {
         @JsonProperty("artifact")
         private String artifact;
         @JsonProperty("allowed-rhbq-versions")
-        private List<String> rhbqVersions = new ArrayList<String>();
+        private List<String> rhbqVersions = new ArrayList<>();
 
         public AllowedArtifact() {
         }
