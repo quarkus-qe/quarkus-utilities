@@ -128,7 +128,7 @@ public class PrepareOperation {
      * Creating the hashmap with artifacts and version which are allowed to have different version from upstream
      */
     public static Map<String, List<String>> createAllowedHashMap(AllowedArtifacts loadedAllowedArtifacts) {
-        if (loadedAllowedArtifacts == null) {
+        if (loadedAllowedArtifacts == null || loadedAllowedArtifacts.getVersionComparisonsArtifacts() == null) {
             return null;
         }
         Map<String, List<String>> allowedArtifacts = new HashMap<>();
