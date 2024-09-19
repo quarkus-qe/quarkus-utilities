@@ -98,8 +98,8 @@ public class GenerateVersionDiffReport {
                     }
                     if (artifactMatcher.find() && versionsMatcher.find()) {
                         String versionsTogether = versionsMatcher.group();
-                        if (!Artifact.versionComparator(versionsTogether)) {
-                            String artifact = artifactMatcher.group();
+                        String artifact = artifactMatcher.group();
+                        if (!Artifact.versionComparator(artifact, versionsTogether)) {
                             addToDifferentArtifacts(artifact,
                                     path.toString().replace(quarkusRepoDirectory.toString(), "").replace(VERSION_PLUGIN_OUTPUT_FILE_NAME, ""),
                                     versionsTogether);
