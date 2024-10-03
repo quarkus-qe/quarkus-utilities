@@ -137,6 +137,7 @@ public class GenerateVersionDiffReport {
             fw.write(HTML_BASE_START.replace("substitute-quarkus-upstream", PrepareOperation.upstreamVersion)
                     .replace("substitute-quarkus-rhbq", PrepareOperation.rhbqVersion));
             fw.write(tableHeader);
+            StringBuilder diffReport = new StringBuilder();
             for (String artifact : differentArtifacts.keySet()) {
                 List<String> versions = differentArtifacts.get(artifact).getDifferentVersions();
                 for (int i = 0; i < versions.size(); i++) {
@@ -145,9 +146,12 @@ public class GenerateVersionDiffReport {
                     writeCol = writeCol.replace("substitute-version", versions.get(i));
                     writeCol = writeCol.replace("substitute-class", differencesInVersions(artifact, versions.get(i)));
                     fw.write(writeCol);
+                    diffReport.append("Artifact: ").append(artifact)
+                            .append(", Versions: ").append(versions.get(i)).append("\n");
                 }
             }
             fw.write(HTML_BASE_END.replace("substitute-date", new SimpleDateFormat("dd/MM/yyyy HH:mm:ss.SSS").format(new java.util.Date())));
+            LOG.info("Different versions report : \n" + diffReport);
         } catch (IOException e) {
             throw new RuntimeException("Unable to save output file. Log: " + e);
         }

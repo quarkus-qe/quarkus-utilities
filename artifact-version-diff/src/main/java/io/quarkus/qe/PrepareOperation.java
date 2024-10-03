@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.apache.commons.lang3.RandomStringUtils;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -38,7 +40,8 @@ public class PrepareOperation {
         Path tmpDirectory = Files.createDirectories(Paths.get(System.getProperty("java.io.tmpdir"), generatedRandomDirName));
 
         LOG.info("Cloning Quarkus repository");
-        String branch = Objects.requireNonNull(System.getProperty("quarkus.repo.tag"), "The quarkus.repo.tag property wasn't set.");
+        String branch = normalizeVersionForUpstream(Objects.requireNonNull(System.getProperty("quarkus.repo.tag"), "The quarkus.repo.tag property wasn't set."));
+
         List<String> gitCloneQuarkus = new ArrayList<>(
                 Arrays.asList("git", "clone", "--single-branch", "--branch", branch, "https://github.com/quarkusio/quarkus.git"));
         executeProcess(gitCloneQuarkus, "Failed to clone Quarkus repository", tmpDirectory);
@@ -52,6 +55,10 @@ public class PrepareOperation {
         return quarkusRepoDirectory;
     }
 
+    private static String normalizeVersionForUpstream(String version) {
+        return version.replaceFirst("\\.redhat-\\d+$", "").replaceFirst("\\.temporary.*$", "");
+    }
+
     public static void executeProcess(List<String> command, String errorMsg, Path path) {
         ProcessBuilder builder = new ProcessBuilder(command);
         builder.directory(path.toFile());
@@ -61,10 +68,20 @@ public class PrepareOperation {
                     .redirectOutput(ProcessBuilder.Redirect.DISCARD)
                     .redirectError(ProcessBuilder.Redirect.DISCARD)
                     .start();
+            StringBuilder output = new StringBuilder();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    output.append(line).append("\n");
+                }
+            }
             process.waitFor();
+            if(process.exitValue()!=0) {
+                throw new RuntimeException(errorMsg + " Output: " + output);
+            }
             assertEquals(0, process.exitValue(), errorMsg);
         } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error during execution: " + errorMsg + ". Exception: " + e.getMessage());
         }
     }
 
@@ -106,7 +123,7 @@ public class PrepareOperation {
      */
     public static Path getUpstreamBom() {
         LOG.info("Executing mvn dependency:get");
-        upstreamVersion = Objects.requireNonNull(System.getProperty("quarkus.repo.tag"), "The quarkus.platform.bom wasn't set.");
+        upstreamVersion = normalizeVersionForUpstream(Objects.requireNonNull(System.getProperty("quarkus.repo.tag"), "The quarkus.repo.tag wasn't set."));
 
         List<String> mvnVersionsExecute = new ArrayList<>(
                 Arrays.asList("mvn", "dependency:get", "-Dartifact=io.quarkus.platform:quarkus-bom:" + upstreamVersion + ":pom",

@@ -72,6 +72,9 @@ public class GeneratePomComparison {
                     .replace("substitute-quarkus-rhbq", PrepareOperation.rhbqVersion));
 
             fw.write("<h2>RHBQ BOM - missing artifacts</h2>\n<table>");
+            String missingArtifactsReport = generateDifferArtifacts(pomComparator.getMissingDependencies(),
+                    allowedArtifactsFile != null ? allowedArtifactsFile.getBomComparisonsMissingArtifacts() : null);
+            LOG.info("Missing artifacts: \n" + missingArtifactsReport);
             fw.write(generateDifferArtifacts(pomComparator.getMissingDependencies(),
                     allowedArtifactsFile != null ? allowedArtifactsFile.getBomComparisonsMissingArtifacts() : null));
             fw.write("</table>");
