@@ -1,0 +1,193 @@
+allowed-artifacts-version-comparison:
+  # https://issues.redhat.com/browse/QUARKUS-5043
+  - artifact:
+      com.google.guava:guava
+    allowed-rhbq-versions:
+      - 33.0.0.jre-redhat-00002
+  # https://issues.redhat.com/browse/QUARKUS-5063?focusedId=25890973&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-25890973
+  - artifact:
+      org.hibernate.common:hibernate-commons-annotations
+    allowed-rhbq-versions:
+      - 7.0.3.Final-redhat-00001
+  # https://issues.redhat.com/browse/QUARKUS-4089
+  - artifact:
+      org.slf4j:slf4j-api
+    allowed-rhbq-versions:
+      - 2.0.7.redhat-00003
+  # all elytron https://issues.redhat.com/browse/QUARKUS-5226
+  - artifact:
+      org.wildfly.security:wildfly-elytron
+    allowed-rhbq-versions:
+      - 2.5.1.Final
+  - artifact:
+      org.wildfly.security:wildfly-elytron-asn1
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-auth
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-auth-server
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-base
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-credential
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-http
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-keystore
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-mechanism
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-mechanism-digest
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-mechanism-gssapi
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-mechanism-oauth2
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-mechanism-scram
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-password-impl
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-permission
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-provider-util
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-realm
+    allowed-rhbq-versions:
+      - 2.5.1.Final
+  - artifact:
+      org.wildfly.security:wildfly-elytron-realm-jdbc
+    allowed-rhbq-versions:
+      - 2.5.1.Final
+  - artifact:
+      org.wildfly.security:wildfly-elytron-realm-ldap
+    allowed-rhbq-versions:
+      - 2.5.1.Final
+  - artifact:
+      org.wildfly.security:wildfly-elytron-realm-token
+    allowed-rhbq-versions:
+      - 2.5.1.Final
+  - artifact:
+      org.wildfly.security:wildfly-elytron-sasl
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-sasl-digest
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-sasl-external
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-sasl-gs2
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-sasl-gssapi
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-sasl-oauth2
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-sasl-plain
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-sasl-scram
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-security-manager-action
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-ssh-util
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-ssl
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-util
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-x500
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-x500-cert
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-x500-cert-acme
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+  - artifact:
+      org.wildfly.security:wildfly-elytron-x500-cert-util
+    allowed-rhbq-versions:
+      - 2.5.1.Final-redhat-00001
+allowed-missing-artifacts-bom-comparison:
+  # https://issues.redhat.com/browse/QUARKUS-5223
+  - io.quarkus:quarkus-rest-client-reactive-spi-deployment
+  - io.quarkus:quarkus-resteasy-reactive-jackson-common
+  - io.quarkus:quarkus-resteasy-reactive-jackson-common-deployment
+  - io.quarkus:quarkus-resteasy-reactive-jsonb-common
+  - io.quarkus:quarkus-resteasy-reactive-jsonb-common-deployment
+  - io.quarkus:quarkus-resteasy-reactive-kotlin
+  - io.quarkus:quarkus-resteasy-reactive-kotlin-deployment
+  - io.quarkus:quarkus-smallrye-reactive-messaging-kotlin
+  - io.quarkus:quarkus-spring-web-resteasy-classic
+  - io.quarkus:quarkus-spring-web-resteasy-classic-deployment
+  - io.quarkus:quarkus-spring-web-resteasy-reactive
+  - io.quarkus:quarkus-spring-web-resteasy-reactive-deployment
+  - io.quarkus:quarkus-vertx-kotlin-deployment
+allowed-extra-artifacts-bom-comparison:
+  - com.aayushatharva.brotli4j:native-linux-aarch64
+  - com.aayushatharva.brotli4j:native-linux-ppc64le
+  - com.aayushatharva.brotli4j:native-linux-s390x
+  - com.aayushatharva.brotli4j:native-windows-x86_64
+  - io.fabric8:crd-generator-test
+  - io.fabric8:crd-generator-test-apt
+  - io.fabric8:kubernetes-httpclient-tests
+  - io.netty:netty-transport-native-epoll-aarch
+  - io.netty:netty-transport-native-epoll-ppcle
+  - io.netty:netty-transport-native-epoll-s390x
+  - io.netty:netty-transport-native-unix-common-ppcle
+  - io.netty:netty-transport-native-unix-common-s390x
+  # https://issues.redhat.com/browse/QUARKUS-5051
+  - org.eclipse.angus:angus-mail
+  - org.gradle:gradle-tooling-api
+

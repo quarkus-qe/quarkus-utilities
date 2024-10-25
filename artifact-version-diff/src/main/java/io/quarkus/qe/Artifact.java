@@ -12,7 +12,8 @@ public class Artifact {
     private HashMap<String, List<String>> duplicates;
 
     // List of know artifact which differ between upstream and RHBQ
-    public static List<String> alwaysDifferentArtifact = Arrays.asList("opentelemetry-instrumentation-annotations-support", "opentelemetry-instrumentation-api-semconv");
+    public static List<String> alwaysDifferentArtifact = Arrays.asList("opentelemetry-instrumentation-annotations-support",
+            "opentelemetry-instrumentation-api-semconv", "opentelemetry-instrumentation-api-incubator");
 
     public Artifact(String location, String versions) {
         duplicates = new HashMap<>();
