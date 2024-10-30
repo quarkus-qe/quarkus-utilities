@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -279,13 +280,13 @@ public class GenerateVersionDiffReport {
      * @param downstreamVersion downstream artifact version e.g. `1.15.0.redhat-00001`
      */
     public void isAllowedWithDifferentVersion(boolean majorMinor, String artifact, String downstreamVersion) {
-        if (!allowedArtifacts.containsKey(artifact)) {
+        if (!isArtifactAllowed(artifact)) {
             setMajorMinorPatch(majorMinor);
             return;
         }
 
         boolean versionContainsAllowed = false;
-        for (String version : allowedArtifacts.get(artifact)) {
+        for (String version : findArtifactVersion(artifact)) {
             if (downstreamVersion.contains(version)) {
                 versionContainsAllowed = true;
                 break;
@@ -294,6 +295,46 @@ public class GenerateVersionDiffReport {
         if (!versionContainsAllowed) {
             setMajorMinorPatch(majorMinor);
         }
+    }
+
+    /**
+     * Looking for artifact, first it will try direct lookup. If artifact not found it go through all allowed artifact
+     * and try if some of them matching allowed pattern.
+     *
+     * @param artifact artifact which should be looked up
+     * @return true if the artifact is in allowed list
+     */
+    public boolean isArtifactAllowed(String artifact) {
+        if (allowedArtifacts.containsKey(artifact)) {
+            return true;
+        }
+        for (String key : allowedArtifacts.keySet()) {
+            // There is a need to replace the `*` to this be valid RegEx. If there is only `*` it will match only last char
+            if (artifact.matches(key.replace("*", ".*"))){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Looking for artifact, first it will try direct lookup. If artifact not found it go through all allowed artifact
+     * and try match RegEx.
+     *
+     * @param artifact artifact which should be looked up
+     * @return list of allowed version of that specific artifact, if not found return empty list
+     */
+    public List<String> findArtifactVersion(String artifact) {
+        if (allowedArtifacts.containsKey(artifact)) {
+            return allowedArtifacts.get(artifact);
+        }
+        for (String key : allowedArtifacts.keySet()) {
+            // There is a need to replace the `*` to this be valid RegEx. If there is only `*` it will match only last char
+            if (artifact.matches(key.replace("*", ".*"))){
+                return allowedArtifacts.get(key);
+            }
+        }
+        return new ArrayList<>();
     }
 
     public void setMajorMinorPatch(boolean majorMinor) {
