@@ -4,11 +4,6 @@ allowed-artifacts-version-comparison:
       com.google.guava:guava
     allowed-rhbq-versions:
       - 33.0.0.jre-redhat-00002
-  # https://issues.redhat.com/browse/QUARKUS-5063?focusedId=25890973&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-25890973
-  - artifact:
-      org.hibernate.common:hibernate-commons-annotations
-    allowed-rhbq-versions:
-      - 7.0.3.Final-redhat-00001
   # https://issues.redhat.com/browse/QUARKUS-4089
   - artifact:
       org.slf4j:slf4j-api
@@ -40,20 +35,6 @@ allowed-artifacts-version-comparison:
     allowed-rhbq-versions:
       - 2.5.1.Final-redhat-00001
 allowed-missing-artifacts-bom-comparison:
-  # https://issues.redhat.com/browse/QUARKUS-5223
-  - io.quarkus:quarkus-rest-client-reactive-spi-deployment
-  - io.quarkus:quarkus-resteasy-reactive-jackson-common
-  - io.quarkus:quarkus-resteasy-reactive-jackson-common-deployment
-  - io.quarkus:quarkus-resteasy-reactive-jsonb-common
-  - io.quarkus:quarkus-resteasy-reactive-jsonb-common-deployment
-  - io.quarkus:quarkus-resteasy-reactive-kotlin
-  - io.quarkus:quarkus-resteasy-reactive-kotlin-deployment
-  - io.quarkus:quarkus-smallrye-reactive-messaging-kotlin
-  - io.quarkus:quarkus-spring-web-resteasy-classic
-  - io.quarkus:quarkus-spring-web-resteasy-classic-deployment
-  - io.quarkus:quarkus-spring-web-resteasy-reactive
-  - io.quarkus:quarkus-spring-web-resteasy-reactive-deployment
-  - io.quarkus:quarkus-vertx-kotlin-deployment
 allowed-extra-artifacts-bom-comparison:
   - com.aayushatharva.brotli4j:native-linux-aarch64
   - com.aayushatharva.brotli4j:native-linux-ppc64le
@@ -67,7 +48,5 @@ allowed-extra-artifacts-bom-comparison:
   - io.netty:netty-transport-native-epoll-s390x
   - io.netty:netty-transport-native-unix-common-ppcle
   - io.netty:netty-transport-native-unix-common-s390x
-  # https://issues.redhat.com/browse/QUARKUS-5051
-  - org.eclipse.angus:angus-mail
   - org.gradle:gradle-tooling-api
 
