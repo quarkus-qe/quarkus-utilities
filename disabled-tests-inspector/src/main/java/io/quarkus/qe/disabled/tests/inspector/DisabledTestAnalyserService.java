@@ -1,8 +1,9 @@
-package io.quarkus.ts;
+package io.quarkus.qe.disabled.tests.inspector;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
 
+import org.jboss.logging.Logger;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHTree;
@@ -11,8 +12,14 @@ import org.kohsuke.github.GHContent;
 import org.kohsuke.github.GHIssue;
 import org.kohsuke.github.GHIssueState;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
+import java.nio.charset.StandardCharsets;
+
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -20,20 +27,25 @@ import java.util.HashMap;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class DisabledTestAnalyserService {
 
+    private static final Logger LOG = Logger.getLogger(DisabledTestAnalyserService.class);
+
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
     private static final Pattern CLASS_DECLARATION_PATTERN = Pattern.compile(
-            "public\\s+(?:\\w+\\s+)*class\\s+(\\w+)"
+            "(?:public|private|protected)?\\s*(?:\\w+\\s+)*class\\s+(\\w+)"
     );
 
     private static final Pattern TEST_METHOD_PATTERN = Pattern.compile(
-            "public\\s+void\\s+(\\w+)\\s*\\("
+            "(?:public|protected)?\\s*void\\s+(\\w+)\\s*\\("
     );
 
     private static final Pattern DISABLED_ANNOTATION_PATTERN = Pattern.compile(
-            "@(Disabled\\w*)\\s*(?:\\((.*)\\))?"
+            "@(Disabled\\w*|Enabled\\w*)\\s*(?:\\((.*)\\))?"
     );
 
     private static final Pattern REASON_PATTERN = Pattern.compile(
@@ -41,7 +53,7 @@ public class DisabledTestAnalyserService {
     );
 
     private static final Pattern EXPLICIT_REASON_PATTERN = Pattern.compile(
-            "\"(.*)\""
+            "^\"(.*)\"$"
     );
 
     private static final Pattern ISSUE_PATTERN = Pattern.compile(
@@ -61,31 +73,33 @@ public class DisabledTestAnalyserService {
             for (GHTreeEntry entry : tree.getTree()) {
                 String filePath = entry.getPath();
                 if (entry.getPath().contains("/test/") && filePath.endsWith(".java")) {
-                    GHContent fileContent = repo.getFileContent(filePath, branch);
-                    disabledTests.addAll(extractDisabledTests(fileContent, moduleStats));
+                    GHContent testClassContent = repo.getFileContent(filePath, branch);
+                    TestClassData data = new TestClassData(
+                            testClassContent.getHtmlUrl(),
+                            filePath,
+                            readFileContent(testClassContent.read())
+                    );
+                    disabledTests.addAll(extractDisabledTests(data, moduleStats));
                 }
             }
 
             BranchAnalysisResult result = new BranchAnalysisResult(branch, disabledTests);
-            String testListFile = getStatsOrTestFileName(baseOutputFileName, branch, false);
-            new ObjectMapper().writerWithDefaultPrettyPrinter().writeValue(new File(testListFile), result);
+            String testListFile = getTestFileName(baseOutputFileName, branch);
+            MAPPER.writerWithDefaultPrettyPrinter().writeValue(new File(testListFile), result);
 
-            String statsListFile = getStatsOrTestFileName(baseOutputFileName, branch, true);
-            new ObjectMapper().writerWithDefaultPrettyPrinter().writeValue(new File(statsListFile), moduleStats);
+            String statsListFile = getStatsFileName(baseOutputFileName, branch);
+            MAPPER.writerWithDefaultPrettyPrinter().writeValue(new File(statsListFile), moduleStats);
         }
     }
 
-    private List<DisabledTest> extractDisabledTests(GHContent ghContent,
-                                                    Map<String, DisabledTestsModuleStats> moduleStats) throws IOException {
-
-        String fileUrl = ghContent.getHtmlUrl();
-        String fileContent = ghContent.getContent();
+    List<DisabledTest> extractDisabledTests(TestClassData testClassData,
+                                            Map<String, DisabledTestsModuleStats> moduleStats) {
 
         List<DisabledTest> disabledTests = new ArrayList<>();
-        String[] lines = fileContent.split("\n");
+        String[] lines = testClassData.content().split("\n");
 
         String previousLine = "";
-        String currentClass = "UnknownClass";
+        String currentClass = null;
         String currentTestMethod = null;
         List<String> annotationTypes = new ArrayList<>();
         List<String> reasons = new ArrayList<>();
@@ -96,7 +110,7 @@ public class DisabledTestAnalyserService {
             currentLine = currentLine.trim();
 
             Matcher classMatcher = CLASS_DECLARATION_PATTERN.matcher(currentLine);
-            if (classMatcher.find()) {
+            if (currentClass == null && classMatcher.find()) {
                 currentClass = classMatcher.group(1);
             }
 
@@ -129,20 +143,25 @@ public class DisabledTestAnalyserService {
                     issueLink = extractIssueLink(annotationContent);
                 }
 
-                if (issueLink == null && previousLine.startsWith("//")) {
+                Matcher previousLineAnnotationMatcher = DISABLED_ANNOTATION_PATTERN.matcher(previousLine);
+                boolean hasPreviousLineAnnotation = previousLineAnnotationMatcher.find();
+
+                // Don't allow to extract issue link from the annotation on previous line
+                if (issueLink == null && previousLine.startsWith("//") && !hasPreviousLineAnnotation) {
                     issueLink = extractIssueLink(previousLine);
                 }
 
-                if (issueLink == null && currentLine.startsWith("//")) {
-                    issueLink = extractIssueLink(currentLine);
-                }
-
-                if (reason == null) {
+                if (reason == null && !hasPreviousLineAnnotation) {
                     reason = getDisablingReasonComment(previousLine);
                 }
 
                 if (reason == null) {
                     reason = getDisablingReasonComment(currentLine);
+                }
+
+                // If an issue link hasn't been extracted yet, try extracting it from the reason comment
+                if (issueLink == null && reason != null) {
+                    issueLink = extractIssueLink(reason);
                 }
 
                 annotationTypes.add(annotationType);
@@ -158,11 +177,11 @@ public class DisabledTestAnalyserService {
                             annotationTypes.get(i),
                             reasons.get(i),
                             issueLinks.get(i),
-                            fileUrl,
+                            testClassData.fileUrl(),
                             isGitHubIssueClosed(issueLinks.get(i))
                     ));
 
-                    String moduleName = extractModuleName(ghContent.getPath());
+                    String moduleName = extractModuleName(testClassData.filePath());
                     moduleStats.putIfAbsent(moduleName, new DisabledTestsModuleStats());
                     moduleStats.get(moduleName).incrementAnnotation(annotationTypes.get(i));
                 }
@@ -200,18 +219,32 @@ public class DisabledTestAnalyserService {
                 GHIssue issue = github.getRepository(repo).getIssue(issueNumber);
                 return issue.getState() == GHIssueState.CLOSED;
             } catch (Exception e) {
+                LOG.error("Failed to connect to GitHub and retrieve issue state", e);
                 return false;
             }
         }
         return false;
     }
 
+    private String readFileContent(InputStream inputStream) throws IOException {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.US_ASCII))) {
+            return reader.lines().collect(Collectors.joining("\n"));
+        }
+    }
+
     private String extractModuleName(String filePath) {
         return filePath.substring(0, filePath.indexOf("/src"));
     }
 
-    private String getStatsOrTestFileName(String fileName, String branchName, boolean isStats) {
-        String statsSuffix = isStats ? "-stats" : "";
-        return fileName.replaceFirst("(\\.json)?$", "-" + branchName + statsSuffix + ".json");
+    private String getTestFileName(String fileName, String branchName) {
+        return getFileName(fileName, branchName, "");
+    }
+
+    private String getStatsFileName(String fileName, String branchName) {
+        return getFileName(fileName, branchName, "-stats");
+    }
+
+    private String getFileName(String fileName, String branchName, String fileNameSuffix) {
+        return fileName.replaceFirst("(\\.json)?$", "-" + branchName + fileNameSuffix + ".json");
     }
 }

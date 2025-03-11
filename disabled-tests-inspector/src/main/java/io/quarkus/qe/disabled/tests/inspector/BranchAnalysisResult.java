@@ -1,4 +1,4 @@
-package io.quarkus.ts;
+package io.quarkus.qe.disabled.tests.inspector;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

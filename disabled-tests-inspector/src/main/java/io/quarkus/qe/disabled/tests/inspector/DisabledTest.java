@@ -1,6 +1,8 @@
-package io.quarkus.ts;
+package io.quarkus.qe.disabled.tests.inspector;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.Objects;
 
 public class DisabledTest {
 
@@ -27,11 +29,39 @@ public class DisabledTest {
 
     public DisabledTest(String testName, String className, String annotationType, String reason, String issueLink, String fileURL, boolean issueClosed) {
         this.testName = testName;
-        this.className = className;
+        this.className = Objects.requireNonNull(className, "Class name must be specified.");
         this.annotationType = annotationType;
         this.reason = reason;
         this.issueLink = issueLink;
         this.fileURL = fileURL;
         this.issueClosed = issueClosed;
+    }
+
+    public String getTestName() {
+        return testName;
+    }
+
+    public String getClassName() {
+        return className;
+    }
+
+    public String getAnnotationType() {
+        return annotationType;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public String getIssueLink() {
+        return issueLink;
+    }
+
+    public String getFileURL() {
+        return fileURL;
+    }
+
+    public boolean isIssueClosed() {
+        return issueClosed;
     }
 }
