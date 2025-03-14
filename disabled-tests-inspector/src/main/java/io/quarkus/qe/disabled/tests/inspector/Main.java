@@ -1,4 +1,4 @@
-package io.quarkus.ts;
+package io.quarkus.qe.disabled.tests.inspector;
 
 import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.QuarkusApplication;

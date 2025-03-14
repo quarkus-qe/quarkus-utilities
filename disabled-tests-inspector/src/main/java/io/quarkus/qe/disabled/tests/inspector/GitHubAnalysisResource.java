@@ -1,4 +1,4 @@
-package io.quarkus.ts;
+package io.quarkus.qe.disabled.tests.inspector;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
