@@ -14,10 +14,10 @@
         <version.junit>5.10.2</version.junit>
         <version.org.apache.maven.maven-artifact>3.9.6</version.org.apache.maven.maven-artifact>
         <version.org.yaml.snakeyaml>2.2</version.org.yaml.snakeyaml>
-        <version.org.apache.maven.plugins>3.12.1</version.org.apache.maven.plugins>
+        <version.org.apache.maven.plugins>3.14.0</version.org.apache.maven.plugins>
         <version.exec-maven-plugin>3.2.0</version.exec-maven-plugin>
         <version.jackson-dataformat-yaml>2.17.0</version.jackson-dataformat-yaml>
-        <version.maven-surefire-plugin>3.2.5</version.maven-surefire-plugin>
+        <version.maven-surefire-plugin>3.5.2</version.maven-surefire-plugin>
         <version.maven-model>3.9.8</version.maven-model>
     </properties>
 

@@ -46,10 +46,10 @@ public class PrepareOperation {
         executeProcess(gitCloneQuarkus, "Failed to clone Quarkus repository", tmpDirectory);
 
         LOG.info("Executing mvn versions:compare-dependencies");
-        List<String> mvnVersionsExecute = new ArrayList<>(Arrays.asList("mvn", "versions:compare-dependencies"));
+        List<String> mvnVersionsExecute = new ArrayList<>(Arrays.asList("mvn", "--batch-mode", "--no-transfer-progress", "versions:compare-dependencies"));
         mvnVersionsExecute.addAll(prepareMavenProperties());
         Path quarkusRepoDirectory = Paths.get(tmpDirectory.toAbsolutePath().toString(), "quarkus");
-        executeProcess(mvnVersionsExecute, "Failed to add remote origin", quarkusRepoDirectory);
+        executeProcess(mvnVersionsExecute, "Error when executing versions:compare-dependencies plugin", quarkusRepoDirectory);
 
         return quarkusRepoDirectory;
     }
@@ -62,7 +62,7 @@ public class PrepareOperation {
                     .directory(path.toFile())
                     .start();
             StringBuilder output = new StringBuilder();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            try (BufferedReader reader = process.inputReader()) {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     output.append(line).append("\n");
@@ -91,6 +91,10 @@ public class PrepareOperation {
         extraProperties.add("-DremotePom=" + remotePom);
 
         extraProperties.add("-DreportOutputFile=" + VERSION_PLUGIN_OUTPUT_FILE_NAME);
+        extraProperties.add("-DreportMode=false");
+
+        // This turn off maven INFO logs and show only ERROR logs
+        extraProperties.add("--quiet");
 
         return extraProperties;
     }
