@@ -15,6 +15,8 @@ public class Artifact {
     public static List<String> alwaysDifferentArtifact = Arrays.asList("opentelemetry-instrumentation-annotations-support",
             "opentelemetry-instrumentation-api-semconv", "opentelemetry-instrumentation-api-incubator");
 
+    public static List<String> versionChangeShouldBeSkipped = Arrays.asList("org.eclipse.jgit");
+
     public Artifact(String location, String versions) {
         duplicates = new HashMap<>();
         List<String> locations = new ArrayList<>(Arrays.asList(location));
@@ -57,11 +59,13 @@ public class Artifact {
 
         // prod creating artifact in format major.minor.patch.redhat-NNNNN or major.minor.patch.suffix-redhat-NNNNN
         // Change from `-` to `.` is happening only when the number is before `-`
-        String version = versions[0].replaceFirst("(?<=\\d)-", ".");
+        // In some rare cases (org.eclipse.jgit) is `-` part of the version (7.1.0.202411261347-r) and should not be changed
+        // These artifacts should be defined in `versionChangeShouldBeSkipped` list
+        String version = isVersionModificationSkipped(artifact) ? versions[0] : versions[0].replaceFirst("(?<=\\d)-", ".");
 
         // check if version is know to differ and strip it of know suffixes
         if (isAlwaysDifferent(artifact)) {
-            version =stripAlphaSuffix(version);
+            version = stripAlphaSuffix(version);
         }
 
         // match any artifact which have only major and minor version
@@ -91,6 +95,16 @@ public class Artifact {
      */
     public static boolean isAlwaysDifferent(String artifact) {
         return alwaysDifferentArtifact.stream().anyMatch(artifact::contains);
+    }
+
+    /**
+     * Check if artifact should skip version change. This can be useful when the artifact have `-` as part of suffix
+     *
+     * @param artifact artifact to be checked
+     * @return
+     */
+    public static boolean isVersionModificationSkipped(String artifact) {
+        return versionChangeShouldBeSkipped.stream().anyMatch(artifact::contains);
     }
 
     /**

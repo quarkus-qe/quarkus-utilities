@@ -243,12 +243,13 @@ public class GenerateVersionDiffReport {
         DefaultArtifactVersion downstreamMajorMinor = new DefaultArtifactVersion(downstream.getMajorVersion() + "." +
                 downstream.getMinorVersion());
 
-        // If the productized version is to complicated (graal-sdk for example 23.1.2.0-3-redhat-00001) `DefaultArtifactVersion`
-        // not parse major and minor version correctly but get these values to 0.0
-        // This check manually get major and minor version from productized version
+        // If the version is to complicated (graal-sdk for example 23.1.2.0-3-redhat-00001, org.eclipse.jgit 7.1.0.202411261347-r)
+        // `DefaultArtifactVersion` not parse major and minor version correctly but get these values to 0.0
+        if (upstream.getMajorVersion() == 0 && upstream.getMinorVersion() == 0) {
+            upstreamMajorMinor = setComplicatedArtifactVersion(versions[0]);
+        }
         if (downstream.getMajorVersion() == 0 && downstream.getMinorVersion() == 0) {
-            String[] complicateVersion = versions[1].split("\\.");
-            downstreamMajorMinor = new DefaultArtifactVersion(complicateVersion[0] + "." + complicateVersion[1]);
+            downstreamMajorMinor = setComplicatedArtifactVersion(versions[1]);
         }
 
         int versionComparison = upstreamMajorMinor.compareTo(downstreamMajorMinor);
@@ -271,6 +272,18 @@ public class GenerateVersionDiffReport {
             setMajorMinorPatch(false);
             return "";
         }
+    }
+
+    /**
+     * If the version is to complicated (graal-sdk for example 23.1.2.0-3-redhat-00001, org.eclipse.jgit 7.1.0.202411261347-r)
+     *`DefaultArtifactVersion` not parse major and minor version correctly, so they need to be handled manually
+     *
+     * @param version string containing complicated which should be parsed manually
+     * @return Correctly parsed version
+     */
+    public static DefaultArtifactVersion setComplicatedArtifactVersion(String version) {
+        String[] complicateVersion = version.split("\\.");
+        return new DefaultArtifactVersion(complicateVersion[0] + "." + complicateVersion[1]);
     }
 
     /**
