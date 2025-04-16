@@ -72,7 +72,7 @@ public class DisabledTestAnalyserService {
 
             for (GHTreeEntry entry : tree.getTree()) {
                 String filePath = entry.getPath();
-                if (entry.getPath().contains("/test/") && filePath.endsWith(".java")) {
+                if ((entry.getPath().contains("/test/") || entry.getPath().contains("testsuite/")) && filePath.endsWith(".java")) {
                     GHContent testClassContent = repo.getFileContent(filePath, branch);
                     TestClassData data = new TestClassData(
                             testClassContent.getHtmlUrl(),
