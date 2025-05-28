@@ -1,0 +1,19 @@
+allowed-artifacts-version-comparison:
+  # https://issues.redhat.com/browse/QUARKUS-4089
+  - artifact:
+      org.slf4j:slf4j-api
+    allowed-rhbq-versions:
+      - 2.0.7.redhat-00003
+allowed-missing-artifacts-bom-comparison:
+  # https://issues.redhat.com/browse/QUARKUS-6176
+  - com.aayushatharva.brotli4j:native-linux-riscv64
+  - com.aayushatharva.brotli4j:native-windows-aarch64
+  # https://issues.redhat.com/browse/QUARKUS-6177
+  - org.bouncycastle:bctls-jdk18on
+allowed-extra-artifacts-bom-comparison:
+  - io.netty:netty-transport-native-epoll-aarch
+  - io.netty:netty-transport-native-epoll-ppcle
+  - io.netty:netty-transport-native-epoll-s390x
+  - io.netty:netty-transport-native-unix-common-ppcle
+  - io.netty:netty-transport-native-unix-common-s390x
+  - org.gradle:gradle-tooling-api
