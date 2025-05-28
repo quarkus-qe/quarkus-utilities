@@ -1,39 +1,18 @@
 allowed-artifacts-version-comparison:
-  # https://issues.redhat.com/browse/QUARKUS-5043
-  - artifact:
-      com.google.guava:guava
-    allowed-rhbq-versions:
-      - 33.0.0.jre-redhat-00002
   # https://issues.redhat.com/browse/QUARKUS-4089
   - artifact:
       org.slf4j:slf4j-api
     allowed-rhbq-versions:
       - 2.0.7.redhat-00003
-  # all elytron https://issues.redhat.com/browse/QUARKUS-5226
+  # Kafka downgrade https://issues.redhat.com/browse/QUARKUS-5849
   - artifact:
-      org.wildfly.security:wildfly-elytron
+      org.apache.kafka:kafka-streams-test-utils
     allowed-rhbq-versions:
-      - 2.5.1.Final
+      - 3.7.1
   - artifact:
-      org.wildfly.security:wildfly-elytron-realm
+      org.apache.kafka:kafka*
     allowed-rhbq-versions:
-      - 2.5.1.Final
-  - artifact:
-      org.wildfly.security:wildfly-elytron-realm-jdbc
-    allowed-rhbq-versions:
-      - 2.5.1.Final
-  - artifact:
-      org.wildfly.security:wildfly-elytron-realm-ldap
-    allowed-rhbq-versions:
-      - 2.5.1.Final
-  - artifact:
-      org.wildfly.security:wildfly-elytron-realm-token
-    allowed-rhbq-versions:
-      - 2.5.1.Final
-  - artifact:
-      org.wildfly.security:wildfly-elytron*
-    allowed-rhbq-versions:
-      - 2.5.1.Final-redhat-00001
+      - 3.7.1.redhat-00001
 allowed-missing-artifacts-bom-comparison:
 allowed-extra-artifacts-bom-comparison:
   - com.aayushatharva.brotli4j:native-linux-aarch64
