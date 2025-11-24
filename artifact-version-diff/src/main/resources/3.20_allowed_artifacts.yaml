@@ -4,6 +4,16 @@ allowed-artifacts-version-comparison:
       org.slf4j:slf4j-api
     allowed-rhbq-versions:
       - 2.0.7.redhat-00003
+  # https://issues.redhat.com/browse/QUARKUS-6941
+  - artifact:
+      io.smallrye.common:smallrye-common-*
+    allowed-rhbq-versions:
+      - 2.12.2.redhat-00001
+  - artifact:
+      org.cyclonedx:cyclonedx-core-java
+    allowed-rhbq-versions:
+      - 11.0.1.redhat-00001
+
 allowed-missing-artifacts-bom-comparison:
   # https://issues.redhat.com/browse/QUARKUS-6176
   - com.aayushatharva.brotli4j:native-linux-riscv64
