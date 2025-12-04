@@ -1,0 +1,19 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: io.quarkus.qe.PrepareDryRun
+recipeList:
+  - io.quarkus.qe.test.stats.analyzer.recipe.MakeCallbacksAndTestsEmpty
+  - org.openrewrite.java.RemoveAnnotation:
+      annotationPattern: '@io.quarkus.test.scenarios.OpenShiftScenario'
+  - org.openrewrite.java.RemoveAnnotation:
+      annotationPattern: '@io.quarkus.test.scenarios.QuarkusScenario'
+  - org.openrewrite.java.RemoveAnnotation:
+      annotationPattern: '@io.quarkus.test.scenarios.KubernetesScenario'
+  - org.openrewrite.java.RemoveAnnotation:
+      annotationPattern: '@io.quarkus.test.junit.QuarkusTest'
+  - org.openrewrite.java.RemoveAnnotation:
+      annotationPattern: '@io.quarkus.test.junit.QuarkusIntegrationTest'
+  - org.openrewrite.java.RemoveAnnotation:
+      annotationPattern: '@org.junit.jupiter.api.extension.ExtendWith(io.vertx.junit5.VertxExtension.class)'
+  - org.openrewrite.java.RemoveAnnotation:
+      annotationPattern: '@jakarta.inject.Inject'
