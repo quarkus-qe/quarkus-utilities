@@ -9,17 +9,15 @@
     <version>1.0.0-SNAPSHOT</version>
 
     <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <version.io.rest-assured>4.5.1</version.io.rest-assured>
-        <version.org.apache.maven.plugins.maven-surefire-plugin>2.21.0</version.org.apache.maven.plugins.maven-surefire-plugin>
-        <version.jboss.logging>3.4.2.Final</version.jboss.logging>
-        <version.jboss.logmanager>2.1.9.Final</version.jboss.logmanager>
-        <version.com.googlecode.grep4j>1.8.7</version.com.googlecode.grep4j>
-        <version.org.apache.maven.plugins>3.11.0</version.org.apache.maven.plugins>
-        <version.org.projectlombok.lombok>1.18.30</version.org.projectlombok.lombok>
+        <version.io.rest-assured>6.0.0</version.io.rest-assured>
+        <version.jboss.logging>3.6.1.Final</version.jboss.logging>
+        <version.jboss.logmanager>3.1.2.Final</version.jboss.logmanager>
+        <version.maven-compier-plugin>3.14.1</version.maven-compier-plugin>
+        <version.maven>3.9.12</version.maven>
+        <version.exec-maven-plugin>3.6.2</version.exec-maven-plugin>
     </properties>
 
     <dependencies>
@@ -39,17 +37,10 @@
             <version>${version.jboss.logmanager}</version>
         </dependency>
         <dependency>
-            <groupId>com.googlecode.grep4j</groupId>
-            <artifactId>grep4j</artifactId>
-            <version>${version.com.googlecode.grep4j}</version>
-        </dependency>
-        <!--  lombok is a dependency of grep4j, it needs newer version to be Java 17 compatible
-        https://stackoverflow.com/questions/66801256/java-lang-illegalaccesserror-class-lombok-javac-apt-lombokprocessor-cannot-acce -->
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>${version.org.projectlombok.lombok}</version>
-            <scope>provided</scope>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-core</artifactId>
+            <version>${version.maven}</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 
@@ -57,35 +48,13 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>${version.org.apache.maven.plugins.maven-surefire-plugin}</version>
-                <configuration>
-                    <systemPropertyVariables>
-                        <maven.home>${maven.home}</maven.home>
-                        <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
-                    </systemPropertyVariables>
-                </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.apache.maven.surefire</groupId>
-                        <artifactId>surefire-junit47</artifactId>
-                        <version>${version.org.apache.maven.plugins.maven-surefire-plugin}</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>${version.org.apache.maven.plugins}</version>
-                <configuration>
-                    <source>11</source>
-                    <target>11</target>
-                </configuration>
+                <version>${version.maven-compier-plugin}</version>
             </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
-                <version>3.1.0</version>
+                <version>${version.exec-maven-plugin}</version>
                 <configuration>
                     <mainClass>io.quarkus.qe.Main</mainClass>
                 </configuration>
