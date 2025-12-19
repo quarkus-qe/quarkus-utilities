@@ -1,22 +1,19 @@
 package io.quarkus.qe;
 
 import io.restassured.path.xml.XmlPath;
-import org.apache.commons.lang3.StringUtils;
-import org.grep4j.core.model.Profile;
-import org.grep4j.core.model.ProfileBuilder;
-import org.grep4j.core.result.GrepResult;
-import org.grep4j.core.result.GrepResults;
+import org.apache.maven.model.Dependency;
+import org.apache.maven.model.Model;
+import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
+import org.codehaus.plexus.util.xml.XmlStreamReader;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import static org.grep4j.core.Grep4j.constantExpression;
-import static org.grep4j.core.Grep4j.grep;
-import static org.grep4j.core.fluent.Dictionary.option;
-import static org.grep4j.core.fluent.Dictionary.with;
-import static org.grep4j.core.options.Option.extraLinesAfter;
 
 public final class Artifact {
     private final Path file;
@@ -115,51 +112,22 @@ public final class Artifact {
             return new VersionedCoordinates(groupId, artifactId, version);
         }
 
-        public Coordinates coordinates() {
-            return versionedCoordinates().withoutVersion();
-        }
-
-        public VersionedCoordinates parentVersionedCoordinates() {
-            XmlPath xml = XmlPath.from(file.toFile());
-            String artifactId = xml.getString("project.parent.artifactId");
-            String groupId = xml.getString("project.parent.groupId");
-            String version = xml.getString("project.parent.version");
-
-            return new VersionedCoordinates(groupId, artifactId, version);
-        }
-
-        public Coordinates parentCoordinates() {
-            return parentVersionedCoordinates().withoutVersion();
-        }
-
         public Stream<String> getDependenciesGav() {
-            final Profile pomFile = ProfileBuilder.newBuilder()
-                    .name("POM file")
-                    .filePath(file.toString())
-                    .onLocalhost()
-                    .build();
-            final GrepResults grepResults = grep(
-                    constantExpression("<dependency>"),
-                    pomFile,
-                    with(option(extraLinesAfter(6))));
-            return grepResults.stream()
-                    .map(GrepResult::getText)
-                    .flatMap(this::extractDependenciesGav);
-        }
+            try {
+                File pomFile = new File(file.toString());
+                MavenXpp3Reader mavenReader = new MavenXpp3Reader();
+                XmlStreamReader streamReader = new XmlStreamReader(pomFile);
+                Model model = mavenReader.read(streamReader);
 
-        private Stream<String> extractDependenciesGav(String grepResult) {
-            final String[] dependencies = StringUtils.substringsBetween(grepResult, DEPENDENCY_TAG, DEPENDENCY_CLOSING_TAG);
-            if (dependencies == null) {
-                return Stream.empty();
+                List<Dependency> dependencies = model.getDependencies();
+                if (model.getDependencyManagement() != null){
+                    dependencies.addAll(model.getDependencyManagement().getDependencies());
+                }
+
+                return dependencies.stream().map(dependency -> dependency.getGroupId() + ":" + dependency.getArtifactId() + ":" + dependency.getVersion());
+            } catch (IOException | XmlPullParserException e){
+                throw new RuntimeException(e);
             }
-            return Arrays.stream(dependencies)
-                    .map(dep -> StringUtils.substringBefore(dep, EXCLUSIONS_TAG))
-                    .map(dep -> {
-                        final String groupId = StringUtils.substringBetween(dep, GROUP_ID_TAG, CLOSING_TAG_START);
-                        final String artifactId = StringUtils.substringBetween(dep, ARTIFACT_ID_TAG, CLOSING_TAG_START);
-                        final String version = StringUtils.substringBetween(dep, VERSION_TAG, CLOSING_TAG_START);
-                        return String.format("%s:%s:%s", groupId, artifactId, version == null ? "" : version);
-                    });
         }
     }
 }

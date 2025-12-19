@@ -2,25 +2,18 @@ package io.quarkus.qe;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import org.grep4j.core.model.Profile;
-import org.grep4j.core.model.ProfileBuilder;
-import org.grep4j.core.result.GrepResult;
-import org.grep4j.core.result.GrepResults;
 import org.jboss.logging.Logger;
 
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static org.grep4j.core.Grep4j.grep;
-import static org.grep4j.core.Grep4j.constantExpression;
-import static org.grep4j.core.Grep4j.regularExpression;
 
 public class AddedArtifactsPrint {
 
@@ -51,11 +44,16 @@ public class AddedArtifactsPrint {
                     .forEach(coords -> allCoordinates.put(coords.withoutVersion(), coords.version()));
         }
 
+        // load all added artifacts into one string
+        String addedArtifacts = Files.readString(Path.of(addedArtifactsListPath));
+
         try (FileWriter fileWriter = new FileWriter(currentWorkingDir + "/added_artifacts_deps.txt")) {
             PrintWriter printWriter = new PrintWriter(fileWriter);
             allCoordinates.keySet()
                     .forEach(coords -> {
-                        if (hasAddedArtifact(coords.toString())) {
+                        // only do for artifacts that were added
+                        // this is a dumb way to do a fulltext search to check it, but works
+                        if (addedArtifacts.contains(coords.toString())) {
                             String version = allCoordinates.get(coords).toString();
                             printWriter.printf("\nDependants for %s - %s :: ADDED \n(%s)\n",
                                     coords, version, getDependentsInfo(coords));
@@ -86,31 +84,14 @@ public class AddedArtifactsPrint {
     }
 
     private String grepDependencyIndex(String pattern) {
-        final Profile indexFile = ProfileBuilder.newBuilder()
-                .name("POM file")
-                .filePath(DEPENDENCY_INDEX_PATH)
-                .onLocalhost()
-                .build();
+        try {
+            return Files.lines(Path.of(DEPENDENCY_INDEX_PATH))
+                    .filter(line -> line.contains(DEPENDENCY_INDEX_DELIMITER + pattern))
+                    .map(line -> line.replace(String.valueOf(DEPENDENCY_INDEX_DELIMITER), " <- "))
+                    .collect(Collectors.joining(", \n"));
 
-        final GrepResults grepResults = grep(constantExpression(DEPENDENCY_INDEX_DELIMITER + pattern), indexFile);
-
-        return grepResults.stream()
-                .map(GrepResult::getText)
-                .flatMap(Pattern.compile("\\R")::splitAsStream)
-                .map(line -> line.replace(String.valueOf(DEPENDENCY_INDEX_DELIMITER), " <- "))
-                .collect(Collectors.joining(", \n"));
-    }
-
-    private boolean hasAddedArtifact(String artifact) {
-        final Profile indexFile = ProfileBuilder.newBuilder()
-                .name("Added artifacts")
-                .filePath(addedArtifactsListPath)
-                .onLocalhost()
-                .build();
-
-        String pattern = String.format("^%s$", artifact);
-        final GrepResults grepResults = grep(regularExpression(pattern), indexFile);
-
-        return grepResults.totalLines() > 0;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
