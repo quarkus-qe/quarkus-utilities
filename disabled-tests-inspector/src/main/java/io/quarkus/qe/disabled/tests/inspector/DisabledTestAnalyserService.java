@@ -21,6 +21,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
 import java.util.List;
+import java.util.Set;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
@@ -33,7 +34,6 @@ import java.util.stream.Collectors;
 public class DisabledTestAnalyserService {
 
     private static final Logger LOG = Logger.getLogger(DisabledTestAnalyserService.class);
-
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private static final Pattern CLASS_DECLARATION_PATTERN = Pattern.compile(
@@ -45,41 +45,88 @@ public class DisabledTestAnalyserService {
     );
 
     private static final Pattern DISABLED_ANNOTATION_PATTERN = Pattern.compile(
-            "@(Disabled\\w*|Enabled\\w*)\\s*(?:\\((.*)\\))?"
+            "@((?:Disabled|Enabled)\\w*)(?:\\s*\\((.*))?"
     );
 
     private static final Pattern REASON_PATTERN = Pattern.compile(
-            "reason\\s*=\\s*\"([^\"]+)\"", Pattern.CASE_INSENSITIVE
+            "(?:reason|disabledReason)\\s*=\\s*\"([^\"]+)\"(?:\\s*\\+\\s*)?"
     );
 
     private static final Pattern EXPLICIT_REASON_PATTERN = Pattern.compile(
-            "^\"(.*)\"$"
+            "^\\s*\"([^\"]+)\"(?:\\s*\\+\\s*)?\\s*$"
     );
 
-    private static final Pattern ISSUE_PATTERN = Pattern.compile(
-    "(https://(?:github\\.com/.+?/issues/\\d+|issues\\.redhat\\.com/browse/\\w+-\\d+))"
+    private static final Pattern NEXT_LINE_STRING_PATTERN = Pattern.compile(
+            "^\\s*\"([^\"]+)\""
     );
 
+    private static final Pattern ISSUE_URL_PATTERN = Pattern.compile(
+            "(https://(?:github\\.com/[^/]+/[^/]+/issues/\\d+|issues\\.redhat\\.com/browse/[A-Z]+-\\d+))"
+    );
 
-    public void analyzeRepository(String repoOwner, String repoName, List<String> branches, String baseOutputFileName) throws IOException {
+    private static final Pattern ISSUE_ID_PATTERN = Pattern.compile(
+            "([A-Z]+-\\d+|QUARKUS-\\d+)"
+    );
+
+    private static final String RED_HAT_ISSUE_TRACKER_URL = "https://issues.redhat.com/browse/";
+
+    private static final Set<String> LITE_MODE_ALWAYS_SKIP = Set.of(
+            "DisabledForJreRange",
+            "DisabledIfSystemProperty",
+            "DisabledOnQuarkusSnapshot",
+            "EnabledOnNative",
+            "EnabledIfSystemProperty",
+            "EnabledWhenLinuxContainersAvailable",
+            "EnabledIfPostgresImageCommunity",
+            "EnabledIfPostgresImageProduct",
+            "EnabledOnQuarkusVersion",
+            "EnabledOnQuarkusVersions"
+    );
+
+    // Annotations skipped in lite mode only if they do not have an issue link
+    private static final Set<String> LITE_MODE_CONDITIONAL_SKIP = Set.of(
+            "DisabledOnNative",
+            "DisabledOnSemeruJdk",
+            "DisabledOnOs"
+    );
+
+    public void analyzeRepository(String repoOwner, String repoName, List<String> branches,
+                                  String baseOutputFileName, boolean liteMode) throws IOException {
+        if (liteMode) {
+            LOG.info("Lite report mode ENABLED");
+        }
+
         GitHub github = GitHub.connect();
         GHRepository repo = github.getRepository(repoOwner + "/" + repoName);
 
         for (String branch : branches) {
+            LOG.info("Fetching tree for branch: " + branch);
             GHTree tree = repo.getTreeRecursive(branch, 1);
+            List<GHTreeEntry> entries = tree.getTree();
+
             List<DisabledTest> disabledTests = new ArrayList<>();
             Map<String, DisabledTestsModuleStats> moduleStats = new HashMap<>();
 
-            for (GHTreeEntry entry : tree.getTree()) {
+            int processedFileCount = 0;
+            int totalFiles = entries.size();
+            LOG.info("Starting analysis of " + totalFiles + " files");
+
+            for (GHTreeEntry entry : entries) {
                 String filePath = entry.getPath();
-                if ((entry.getPath().contains("/test/") || entry.getPath().contains("testsuite/")) && filePath.endsWith(".java")) {
+
+                processedFileCount++;
+                if (processedFileCount % 100 == 0) {
+                    LOG.info(String.format("Analyzed %d / %d files (branch: '%s')", processedFileCount, totalFiles, branch));
+                }
+
+                if ((filePath.contains("/test/") || filePath.contains("testsuite/")) && filePath.endsWith(".java")) {
                     GHContent testClassContent = repo.getFileContent(filePath, branch);
                     TestClassData data = new TestClassData(
                             testClassContent.getHtmlUrl(),
                             filePath,
                             readFileContent(testClassContent.read())
                     );
-                    disabledTests.addAll(extractDisabledTests(data, moduleStats));
+                    disabledTests.addAll(extractDisabledTests(data, moduleStats, liteMode));
                 }
             }
 
@@ -89,121 +136,212 @@ public class DisabledTestAnalyserService {
 
             String statsListFile = getStatsFileName(baseOutputFileName, branch);
             MAPPER.writerWithDefaultPrettyPrinter().writeValue(new File(statsListFile), moduleStats);
+
+            LOG.info("Finished analysis for branch: " + branch);
         }
     }
 
     List<DisabledTest> extractDisabledTests(TestClassData testClassData,
-                                            Map<String, DisabledTestsModuleStats> moduleStats) {
+                                            Map<String, DisabledTestsModuleStats> moduleStats,
+                                            boolean liteMode) {
 
         List<DisabledTest> disabledTests = new ArrayList<>();
         String[] lines = testClassData.content().split("\n");
 
-        String previousLine = "";
         String currentClass = null;
         String currentTestMethod = null;
+
         List<String> annotationTypes = new ArrayList<>();
         List<String> reasons = new ArrayList<>();
         List<String> issueLinks = new ArrayList<>();
-        boolean insideDisabledBlock = false;
 
-        for (String currentLine : lines) {
-            currentLine = currentLine.trim();
+        String lastComment = null;
+        boolean insideBlockComment = false;
 
-            Matcher classMatcher = CLASS_DECLARATION_PATTERN.matcher(currentLine);
-            if (currentClass == null && classMatcher.find()) {
+        for (int i = 0; i < lines.length; i++) {
+            String trimmedLine = lines[i].trim();
+            if (trimmedLine.isEmpty()) continue;
+
+            // handle block comments
+            if (insideBlockComment) {
+                if (trimmedLine.contains("*/")) {
+                    insideBlockComment = false;
+                }
+                continue;
+            }
+            if (trimmedLine.startsWith("/*")) {
+                if (!trimmedLine.contains("*/")) {
+                    insideBlockComment = true;
+                }
+                continue;
+            }
+
+            String inlineComment = null;
+            String lineWithoutComment = trimmedLine;
+
+            int commentIndex = trimmedLine.indexOf("//");
+            // If // is preceded by :, it's likely a URL (https://), so it is skipped and looks further
+            while (commentIndex > 0 && trimmedLine.charAt(commentIndex - 1) == ':') {
+                commentIndex = trimmedLine.indexOf("//", commentIndex + 2);
+            }
+
+            if (commentIndex != -1) {
+                inlineComment = trimmedLine.substring(commentIndex + 2).trim();
+                lineWithoutComment = trimmedLine.substring(0, commentIndex).trim();
+            }
+
+            if (lineWithoutComment.isEmpty()) {
+                lastComment = inlineComment;
+                continue;
+            }
+
+            // class detection
+            Matcher classMatcher = CLASS_DECLARATION_PATTERN.matcher(lineWithoutComment);
+            if (classMatcher.find()) {
                 currentClass = classMatcher.group(1);
+                flushAnnotations(disabledTests, moduleStats, annotationTypes, reasons, issueLinks,
+                        currentClass, "All tests in class", testClassData, liteMode);
+                lastComment = null;
+                continue;
             }
 
-            Matcher testMethodMatcher = TEST_METHOD_PATTERN.matcher(currentLine);
-            if (testMethodMatcher.find()) {
-                currentTestMethod = testMethodMatcher.group(1);
+            // method detection
+            Matcher methodMatcher = TEST_METHOD_PATTERN.matcher(lineWithoutComment);
+            if (methodMatcher.find()) {
+                currentTestMethod = methodMatcher.group(1);
+                if (!currentTestMethod.equals(currentClass)) {
+                    flushAnnotations(disabledTests, moduleStats, annotationTypes, reasons, issueLinks,
+                            currentClass, currentTestMethod, testClassData, liteMode);
+                }
+                lastComment = null;
+                continue;
             }
 
-            Matcher disabledMatcher = DISABLED_ANNOTATION_PATTERN.matcher(currentLine);
+            // annotation detection
+            Matcher disabledMatcher = DISABLED_ANNOTATION_PATTERN.matcher(lineWithoutComment);
+
             if (disabledMatcher.find()) {
-                String reason = null;
-                String issueLink = null;
-                insideDisabledBlock = true;
                 String annotationType = disabledMatcher.group(1);
-
                 String annotationContent = disabledMatcher.group(2);
-                if (annotationContent != null) {
-                    Matcher reasonMatcher = REASON_PATTERN.matcher(annotationContent);
 
-                    if (reasonMatcher.find()) {
-                        reason = reasonMatcher.group(1);
+                String reason = null;
+                boolean isMultiline = false;
+
+                if (annotationContent != null) {
+                    // remove the closing parenthesis of the annotation if present
+                    annotationContent = annotationContent.trim();
+                    if (annotationContent.endsWith(")")) {
+                        annotationContent = annotationContent.substring(0, annotationContent.length() - 1).trim();
                     }
 
-                    if (reason == null) {
-                        Matcher explicitReasonmatcher = EXPLICIT_REASON_PATTERN.matcher(annotationContent);
-                        if (explicitReasonmatcher.find()) {
-                            reason = explicitReasonmatcher.group(1);
+                    Matcher propertyMatcher = REASON_PATTERN.matcher(annotationContent);
+                    if (propertyMatcher.find()) {
+                        reason = propertyMatcher.group(1);
+                        if ((propertyMatcher.groupCount() > 1 && propertyMatcher.group(2) != null)
+                                || annotationContent.trim().endsWith("+")) {
+                            isMultiline = true;
+                        }
+                    } else {
+                        Matcher valueMatcher = EXPLICIT_REASON_PATTERN.matcher(annotationContent);
+                        if (valueMatcher.find()) {
+                            reason = valueMatcher.group(1);
+                            if (annotationContent.trim().endsWith("+")) {
+                                isMultiline = true;
+                            }
                         }
                     }
-                    issueLink = extractIssueLink(annotationContent);
                 }
 
-                Matcher previousLineAnnotationMatcher = DISABLED_ANNOTATION_PATTERN.matcher(previousLine);
-                boolean hasPreviousLineAnnotation = previousLineAnnotationMatcher.find();
-
-                // Don't allow to extract issue link from the annotation on previous line
-                if (issueLink == null && previousLine.startsWith("//") && !hasPreviousLineAnnotation) {
-                    issueLink = extractIssueLink(previousLine);
+                // multiline reason builder
+                if (isMultiline && (i + 1 < lines.length)) {
+                    String nextLine = lines[i+1].trim();
+                    Matcher multilineMatcher = NEXT_LINE_STRING_PATTERN.matcher(nextLine);
+                    if (multilineMatcher.find()) {
+                        reason += multilineMatcher.group(1);
+                    }
                 }
 
-                if (reason == null && !hasPreviousLineAnnotation) {
-                    reason = getDisablingReasonComment(previousLine);
+                if (reason == null && inlineComment != null) {
+                    reason = inlineComment;
                 }
 
-                if (reason == null) {
-                    reason = getDisablingReasonComment(currentLine);
+                if (reason == null && lastComment != null) {
+                    reason = lastComment;
                 }
 
-                // If an issue link hasn't been extracted yet, try extracting it from the reason comment
-                if (issueLink == null && reason != null) {
-                    issueLink = extractIssueLink(reason);
+                String issueLink = extractIssueLink(reason);
+                if (issueLink == null && inlineComment != null) {
+                    issueLink = extractIssueLink(inlineComment);
+                }
+                if (issueLink == null && lastComment != null) {
+                    issueLink = extractIssueLink(lastComment);
+                }
+
+                if (issueLink == null) {
+                    String text = (reason != null) ? reason : ((inlineComment != null) ? inlineComment : lastComment);
+                    issueLink = tryBuildIssueLink(text);
                 }
 
                 annotationTypes.add(annotationType);
                 reasons.add(reason);
                 issueLinks.add(issueLink);
+
+                lastComment = null;
+            } else {
+                lastComment = null;
             }
-
-            if (insideDisabledBlock && (testMethodMatcher.lookingAt() || (classMatcher.lookingAt()))) {
-                for (int i = 0; i < annotationTypes.size(); i++) {
-                    disabledTests.add(new DisabledTest(
-                            currentTestMethod != null ? currentTestMethod : "All methods",
-                            currentClass,
-                            annotationTypes.get(i),
-                            reasons.get(i),
-                            issueLinks.get(i),
-                            testClassData.fileUrl(),
-                            isGitHubIssueClosed(issueLinks.get(i))
-                    ));
-
-                    String moduleName = extractModuleName(testClassData.filePath());
-                    moduleStats.putIfAbsent(moduleName, new DisabledTestsModuleStats());
-                    moduleStats.get(moduleName).incrementAnnotation(annotationTypes.get(i));
-                }
-
-                annotationTypes.clear();
-                reasons.clear();
-                issueLinks.clear();
-                insideDisabledBlock = false;
-            }
-            previousLine = currentLine;
         }
         return disabledTests;
     }
 
+    private void flushAnnotations(List<DisabledTest> tests, Map<String, DisabledTestsModuleStats> moduleStats,
+                                  List<String> types, List<String> reasons, List<String> issueLinks,
+                                  String className, String testName, TestClassData data, boolean liteMode) {
+
+        if (types.isEmpty()) return;
+
+        for (int i = 0; i < types.size(); i++) {
+            String type = types.get(i);
+            String reason = reasons.get(i);
+            String issueLink = issueLinks.get(i);
+
+            // Lite mode filtering
+            if (liteMode) {
+                if (LITE_MODE_ALWAYS_SKIP.contains(type)) {
+                    continue;
+                }
+                if (LITE_MODE_CONDITIONAL_SKIP.contains(type)) {
+                    if (issueLink == null || issueLink.isEmpty()) {
+                        continue;
+                    }
+                }
+            }
+
+            boolean isClosed = isGitHubIssueClosed(issueLink);
+
+            tests.add(new DisabledTest(testName, className, type, reason, issueLink, data.fileUrl(), isClosed));
+
+            String moduleName = extractModuleName(data.filePath());
+            moduleStats.putIfAbsent(moduleName, new DisabledTestsModuleStats());
+            moduleStats.get(moduleName).incrementAnnotation(type);
+        }
+
+        types.clear();
+        reasons.clear();
+        issueLinks.clear();
+    }
+
     private String extractIssueLink(String text) {
-        Matcher issueMatcher = ISSUE_PATTERN.matcher(text);
+        if (text == null) return null;
+        Matcher issueMatcher = ISSUE_URL_PATTERN.matcher(text);
         return issueMatcher.find() ? issueMatcher.group(1) : null;
     }
 
-    private String getDisablingReasonComment(String line) {
-        if (line.contains("//")) {
-            return line.substring(line.indexOf("//") + 2).trim();
+    private String tryBuildIssueLink(String text) {
+        if (text == null) return null;
+        Matcher idMatcher = ISSUE_ID_PATTERN.matcher(text);
+        if (idMatcher.find()) {
+            return RED_HAT_ISSUE_TRACKER_URL + idMatcher.group(1);
         }
         return null;
     }
@@ -212,14 +350,24 @@ public class DisabledTestAnalyserService {
         if (issueLink != null && issueLink.contains("github.com")) {
             try {
                 String[] parts = issueLink.split("/");
+                // Format check: .../owner/repo/issues/number
+                if (parts.length < 4) return false;
+
                 String repo = parts[parts.length - 4] + "/" + parts[parts.length - 3];
-                int issueNumber = Integer.parseInt(parts[parts.length - 1]);
+                String issueNumStr = parts[parts.length - 1];
+
+                // Remove anchor (#issuecomment-1234) if present
+                if (issueNumStr.contains("#")) {
+                    issueNumStr = issueNumStr.substring(0, issueNumStr.indexOf("#"));
+                }
+
+                int issueNumber = Integer.parseInt(issueNumStr);
 
                 GitHub github = GitHub.connect();
                 GHIssue issue = github.getRepository(repo).getIssue(issueNumber);
                 return issue.getState() == GHIssueState.CLOSED;
             } catch (Exception e) {
-                LOG.error("Failed to connect to GitHub and retrieve issue state", e);
+                LOG.error("Failed to check issue state for " + issueLink, e);
                 return false;
             }
         }
@@ -227,7 +375,7 @@ public class DisabledTestAnalyserService {
     }
 
     private String readFileContent(InputStream inputStream) throws IOException {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.US_ASCII))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
             return reader.lines().collect(Collectors.joining("\n"));
         }
     }

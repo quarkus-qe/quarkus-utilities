@@ -140,7 +140,7 @@ public class DisabledTestsInspectorTest {
         List<DisabledTest> results = analyzeTestClass(testClassContent);
 
         assertEquals(1, results.size());
-        assertDisabledTestDetails(results.get(0), "ClassDisabledTest", "All methods",
+        assertDisabledTestDetails(results.get(0), "ClassDisabledTest", "All tests in class",
                 "Disabled", "Disabled class", null);
     }
 
@@ -241,7 +241,7 @@ public class DisabledTestsInspectorTest {
 
         assertEquals(4, results.size());
 
-        assertDisabledTestDetails(results.get(0), "MultiTestClass", "All methods",
+        assertDisabledTestDetails(results.get(0), "MultiTestClass", "All tests in class",
                 "DisabledOnNative", null, null);
 
         assertDisabledTestDetails(results.get(1), "MultiTestClass", "testOne",
@@ -292,20 +292,99 @@ public class DisabledTestsInspectorTest {
 
         assertEquals(2, results.size());
 
-        assertDisabledTestDetails(results.get(0), "TestClass", "All methods",
+        assertDisabledTestDetails(results.get(0), "TestClass", "All tests in class",
                 "DisabledIfSystemProperty",
                 "https://github.com/org/repo/issues/1145",
                 "https://github.com/org/repo/issues/1145");
 
-        assertDisabledTestDetails(results.get(1), "TestClass", "All methods",
+        assertDisabledTestDetails(results.get(1), "TestClass", "All tests in class",
                 "EnabledIfSystemProperty",
                 null, null);
+    }
+
+    @Test
+    public void shouldAutocompleteJiraLink() {
+        String testClassContent = """
+            @QuarkusScenario
+            public class JiraTest {
+                @Test
+                @Disabled("QUARKUS-12345")
+                public void testMethod() {}
+            }
+            """;
+
+        List<DisabledTest> results = analyzeTestClass(testClassContent);
+
+        assertEquals(1, results.size());
+        assertDisabledTestDetails(results.get(0), "JiraTest", "testMethod",
+                "Disabled", "QUARKUS-12345",
+                "https://issues.redhat.com/browse/QUARKUS-12345");
+    }
+
+    @Test
+    public void shouldNotLeakReasonToNextAnnotation() {
+        String testClassContent = """
+            @QuarkusScenario
+            public class LeakTest {
+                @Disabled("Old reason")
+                @DisabledOnNative
+                @Test
+                public void testMethod() {}
+            }
+            """;
+
+        List<DisabledTest> results = analyzeTestClass(testClassContent);
+
+        assertEquals(2, results.size());
+
+        assertDisabledTestDetails(results.get(0), "LeakTest", "testMethod",
+                "Disabled", "Old reason", null);
+
+        assertDisabledTestDetails(results.get(1), "LeakTest", "testMethod",
+                "DisabledOnNative", null, null);
+    }
+
+    @Test
+    public void shouldHandleMultilineReason() {
+        String testClassContent = """
+            @QuarkusScenario
+            public class MultilineTest {
+                @Test
+                @Disabled("Part 1 " +
+                          "Part 2")
+                public void testMethod() {}
+            }
+            """;
+
+        List<DisabledTest> results = analyzeTestClass(testClassContent);
+
+        assertEquals(1, results.size());
+        assertDisabledTestDetails(results.get(0), "MultilineTest", "testMethod",
+                "Disabled", "Part 1 Part 2", null);
+    }
+
+    @Test
+    public void shouldHandleSpacesInAnnotationValue() {
+        String testClassContent = """
+            @QuarkusScenario
+            public class SpacingTest {
+                @Test
+                @Disabled( " Spaced Reason " )
+                public void testMethod() {}
+            }
+            """;
+
+        List<DisabledTest> results = analyzeTestClass(testClassContent);
+
+        assertEquals(1, results.size());
+        assertDisabledTestDetails(results.get(0), "SpacingTest", "testMethod",
+                "Disabled", " Spaced Reason ", null);
     }
 
     private List<DisabledTest> analyzeTestClass(String testClassContent) {
         Map<String, DisabledTestsModuleStats> moduleStats = new HashMap<>();
         TestClassData testFile = new TestClassData("https://gh.none/stub", "example/src/test/TestClass.java", testClassContent);
-        return disabledTestAnalyserService.extractDisabledTests(testFile, moduleStats);
+        return disabledTestAnalyserService.extractDisabledTests(testFile, moduleStats, false);
     }
 
     private void assertDisabledTestDetails(DisabledTest test, String className, String testName,

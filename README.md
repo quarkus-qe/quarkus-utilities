@@ -57,6 +57,61 @@ Or you can run it manually as described below.
   - Testing with RHBQ example (version 3.8.3 vs 3.8.3.redhat-00002):
     - `mvn clean test -Dmaven.repo.local=<path_to_maven_local_repository> -Dquarkus.platform.bom=com.redhat.quarkus.platform:quarkus-bom:3.8.3.redhat-00002 -Dquarkus.repo.tag=3.8.3`
 
+### disabled-tests-inspector
+Disabled Tests Inspector is a tool that analyzes Java test code in a GitHub repository, identifying disabled tests and categorizing them by annotation type and module.
+It generates a JSON report summarizing the findings.
+
+#### Features
+- Scans Java test files for disabled test annotations (`@Disabled`, `@DisabledOnNative`, `@DisabledOnOs`, etc.)
+- Extracts reasons and issue links from annotations and comments
+- Supports multiline reasons
+- Detects closed GitHub issues
+- Lite report mode: optional mode to filter out environment/configuration-specific exclusions and focus on actual bugs
+- Categorizes disabled tests per module
+- Generates structured JSON reports
+
+#### Requirements
+- Java 17+
+- Maven 3.8.6+
+- A GitHub personal access token
+
+#### Usage example
+You can configure the tool using Java system properties
+
+| Property             | Description                                                      | Default  |
+|:---------------------|:-----------------------------------------------------------------|:---------|
+| `repoOwner`          | The owner of the GitHub repository                               | Required |
+| `repoName`           | The name of the repository                                       | Required |
+| `branches`           | Comma-separated list of branches to analyze                      | Required |
+| `baseOutputFileName` | Base name for the generated JSON files                           | Required |
+| `liteReport`         | If `true`, filters out noise (see `Running in Lite Mode` below)  | `false`  |
+
+
+#### Running the analysis
+If you want to inspect multiple branches, list them comma-separated in `branches` property as described in the example below:
+```shell
+export GITHUB_OAUTH=your_personal_access_token  
+mvn clean install
+java -DrepoOwner=repoOwner -DrepoName=repoName -Dbranches="main,3.27" -DbaseOutputFileName=disabled-tests -jar target/quarkus-app/quarkus-run.jar
+```
+
+#### Running in Lite Mode
+Lite Mode automatically filters out "noise" from configuration annotations (like specific JRE or OS requirements)
+It ensures that you only see environment-specific disabled tests if they are actually tracking a bug
+`java -DliteReport=true ...`
+
+#### What is filtered in Lite Mode?
+- Always skipped: configuration annotations like `DisabledForJreRange`, `EnabledWhenLinuxContainersAvailable`, etc.
+- Conditionally skipped: annotations like `DisabledOnNative` or `DisabledOnOs` are skipped unless they contain a link to an issue tracker
+
+#### Example output
+After running the tool, you will get the following output files:
+
+1. `disabled-tests-3.27.json` – A detailed list of all disabled tests in `3.27` branch
+2. `disabled-tests-3.27-stats.json` – A summary of disabled tests per annotation type per module in `3.27` branch
+3. `disabled-tests-main.json` – A detailed list of all disabled tests in `main` branch
+4. `disabled-tests-main-stats.json` – A summary of disabled tests per annotation type per module in `main` branch
+
 ### test-stats-analyzer
 
 Tool that allows to analyze how many tests are run for given Java git project.

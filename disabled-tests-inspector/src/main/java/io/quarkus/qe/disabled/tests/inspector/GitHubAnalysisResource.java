@@ -21,10 +21,11 @@ public class GitHubAnalysisResource {
         String repoName = System.getProperty("repoName", "repo-name");
         String branches = System.getProperty("branches", "main");
         String baseOutputFileName = System.getProperty("baseOutputFileName", "disabled-tests-report.json");
+        boolean liteMode = Boolean.parseBoolean(System.getProperty("liteReport", "false"));
 
         try {
             LOG.info("Starting analysis for " + repoOwner + "/" + repoName + " on branches: " + branches);
-            analyserService.analyzeRepository(repoOwner, repoName, Arrays.asList(branches.split(",")), baseOutputFileName);
+            analyserService.analyzeRepository(repoOwner, repoName, Arrays.asList(branches.split(",")), baseOutputFileName, liteMode);
             LOG.info("Analysis finished, see reports in created JSON files.");
         } catch (IOException e) {
             LOG.error("Error creating YAML file: ", e);
