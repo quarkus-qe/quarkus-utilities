@@ -70,5 +70,13 @@ public class AllowedArtifacts {
         public void setRhbqVersions(List<String> rhbqVersions) {
             this.rhbqVersions = rhbqVersions;
         }
+
+        @Override
+        public String toString() {
+            return "AllowedArtifact{" +
+                    "artifact='" + artifact + '\'' +
+                    ", rhbqVersions=" + rhbqVersions +
+                    '}';
+        }
     }
 }
