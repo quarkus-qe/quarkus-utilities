@@ -1,0 +1,51 @@
+allowed-artifacts-version-comparison:
+  # CVE fixes in 3.27.3 were applied on prod level
+  - artifact:
+      io.vertx:vertx-*
+    allowed-rhbq-versions:
+      - 4.5.26.redhat-00001
+      - 4.5.26
+  - artifact:
+      io.smallrye.reactive:smallrye-mutiny-vertx-*
+    allowed-rhbq-versions:
+      - 3.21.6.redhat-00001
+      - 3.21.6
+  - artifact:
+      io.smallrye.reactive:vertx-mutiny-generator
+    allowed-rhbq-versions:
+      - 3.21.6.redhat-00001
+  - artifact:
+      io.netty:netty-*
+    allowed-rhbq-versions:
+      - 4.1.132.Final-redhat-00001
+      - 4.1.132.Final
+  - artifact:
+      io.netty:netty-tcnative*
+    allowed-rhbq-versions:
+      - 2.0.75.Final-redhat-00002
+      - 2.0.75.Final
+  - artifact:
+      org.codehaus.plexus:plexus-utils
+    allowed-rhbq-versions:
+      - 3.6.0.redhat-00001
+  - artifact:
+      com.fasterxml.jackson*:*
+    allowed-rhbq-versions:
+      - 2.21.2.redhat-00001
+      - 2.21.2
+  - artifact:
+      com.fasterxml.jackson.core:jackson-annotations
+    allowed-rhbq-versions:
+      - 2.21.0.redhat-00002
+  - artifact:
+      io.agroal:agroal-*
+    allowed-rhbq-versions:
+      - 2.8.1.redhat-00001
+
+allowed-extra-artifacts-bom-comparison:
+  - io.netty:netty-transport-native-epoll-aarch
+  - io.netty:netty-transport-native-epoll-ppcle
+  - io.netty:netty-transport-native-epoll-s390x
+  - io.netty:netty-transport-native-unix-common-ppcle
+  - io.netty:netty-transport-native-unix-common-s390x
+  - com.fasterxml.jackson.datatype:jackson-datatype-hibernate7
