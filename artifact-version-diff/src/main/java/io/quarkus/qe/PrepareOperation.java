@@ -42,7 +42,7 @@ public class PrepareOperation {
         LOG.info("Cloning Quarkus repository");
         String branch = Objects.requireNonNull(System.getProperty("quarkus.repo.tag"), "The quarkus.repo.tag property wasn't set.");
         List<String> gitCloneQuarkus = new ArrayList<>(
-                Arrays.asList("git", "clone", "--single-branch", "--branch", branch, "https://github.com/quarkusio/quarkus.git"));
+                Arrays.asList("git", "clone", "--depth",  "1", "--single-branch", "--branch", branch, "https://github.com/quarkusio/quarkus.git"));
         executeProcess(gitCloneQuarkus, "Failed to clone Quarkus repository", tmpDirectory);
 
         LOG.info("Executing mvn versions:compare-dependencies");
@@ -55,6 +55,7 @@ public class PrepareOperation {
     }
 
     public static void executeProcess(List<String> command, String errorMsg, Path path) {
+        LOG.info("Executing " + command + ", " + path);
         ProcessBuilder builder = new ProcessBuilder(command);
         builder.directory(path.toFile());
         try {

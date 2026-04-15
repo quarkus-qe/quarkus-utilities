@@ -263,13 +263,13 @@ public class GenerateVersionDiffReport {
             isAllowedWithDifferentVersion(false, artifact, versions[1]);
             return "";
         } else if (versionComparison < 0) {
-            setMajorMinorPatch(true);
+            setMajorMinorPatch(true, artifact);
             return "newer";
         } else if (versionComparison > 0) {
-            setMajorMinorPatch(true);
+            setMajorMinorPatch(true, artifact);
             return "older";
         } else {
-            setMajorMinorPatch(false);
+            setMajorMinorPatch(false, artifact);
             return "";
         }
     }
@@ -294,7 +294,7 @@ public class GenerateVersionDiffReport {
      */
     public void isAllowedWithDifferentVersion(boolean majorMinor, String artifact, String downstreamVersion) {
         if (!isArtifactAllowed(artifact)) {
-            setMajorMinorPatch(majorMinor);
+            setMajorMinorPatch(majorMinor, artifact);
             return;
         }
 
@@ -306,7 +306,7 @@ public class GenerateVersionDiffReport {
             }
         }
         if (!versionContainsAllowed) {
-            setMajorMinorPatch(majorMinor);
+            setMajorMinorPatch(majorMinor, artifact);
         }
     }
 
@@ -350,7 +350,8 @@ public class GenerateVersionDiffReport {
         return new ArrayList<>();
     }
 
-    public void setMajorMinorPatch(boolean majorMinor) {
+    public void setMajorMinorPatch(boolean majorMinor, String problematicArtifact) {
+        LOG.info("Unexpected version difference, problematic artifact: " + problematicArtifact);
         if (majorMinor) {
             majorMinorVersionDiffer = true;
         } else {
