@@ -1,0 +1,108 @@
+allowed-artifacts-version-comparison:
+  # CVE fixes in 3.33.1 were applied on prod level
+  - artifact:
+      com.aayushatharva.brotli4j:brotli4j
+    allowed-rhbq-versions:
+      - 1.23.0.redhat-00001
+  - artifact:
+      com.aayushatharva.brotli4j:native-*
+    allowed-rhbq-versions:
+      - 1.23.0.redhat-00001
+      - 1.23.0
+  - artifact:
+      io.netty:netty-*
+    allowed-rhbq-versions:
+      - 4.1.133.Final-redhat-00002
+      - 4.1.133.Final
+  - artifact:
+      io.netty:netty-tcnative
+    allowed-rhbq-versions:
+      - 2.0.75.Final
+  - artifact:
+      io.netty:netty-tcnative-boringssl-static
+    allowed-rhbq-versions:
+      - 2.0.75.Final
+  - artifact:
+      io.netty:netty-tcnative-classes
+    allowed-rhbq-versions:
+      - 2.0.75.Final-redhat-00003
+  - artifact:
+      io.quarkus.http:quarkus-http-*
+    allowed-rhbq-versions:
+      - 5.5.0.redhat-00001
+  - artifact:
+      io.smallrye.reactive:smallrye-mutiny-vertx-*
+    allowed-rhbq-versions:
+      - 3.21.6.redhat-00001
+      - 3.21.6
+  - artifact:
+      io.smallrye.reactive:vertx-mutiny-generator
+    allowed-rhbq-versions:
+      - 3.21.6.redhat-00001
+  - artifact:
+      io.vertx:vertx-*
+    allowed-rhbq-versions:
+      - 4.5.27.redhat-00001
+      - 4.5.27
+  - artifact:
+      org.apache.kafka:kafka*
+    allowed-rhbq-versions:
+      - 4.1.2.redhat-00001
+  - artifact:
+      org.bouncycastle:bcjmail-jdk18on
+    allowed-rhbq-versions:
+      - 1.84.0.redhat-00001
+  - artifact:
+      org.bouncycastle:bcmail-jdk18on
+    allowed-rhbq-versions:
+      - 1.84.0.redhat-00001
+  - artifact:
+      org.bouncycastle:bcmls-jdk18on
+    allowed-rhbq-versions:
+      - 1.84
+  - artifact:
+      org.bouncycastle:bcpg-jdk18on
+    allowed-rhbq-versions:
+      - 1.84.0.redhat-00001
+  - artifact:
+      org.bouncycastle:bcpkix-jdk18on
+    allowed-rhbq-versions:
+      - 1.84.0.redhat-00001
+  - artifact:
+      org.bouncycastle:bcprov-jdk18on
+    allowed-rhbq-versions:
+      - 1.84.0.redhat-00001
+  - artifact:
+      org.bouncycastle:bctls-jdk18on
+    allowed-rhbq-versions:
+      - 1.84
+  - artifact:
+      org.bouncycastle:bcutil-jdk18on
+    allowed-rhbq-versions:
+      - 1.84.0.redhat-00001
+  - artifact:
+      org.codehaus.plexus:plexus-utils
+    allowed-rhbq-versions:
+      - 3.6.0.redhat-00001
+  - artifact:
+      org.graalvm.sdk:graal-sdk
+    allowed-rhbq-versions:
+      - 25.0.3.0-1-redhat-00001
+  - artifact:
+      org.graalvm.sdk:nativeimage
+    allowed-rhbq-versions:
+      - 25.0.3.0-1-redhat-00001
+  - artifact:
+      org.postgresql:postgresql
+    allowed-rhbq-versions:
+      - 42.7.11.redhat-00001
+allowed-missing-artifacts-bom-comparison:
+  # https://redhat.atlassian.net/browse/QUARKUS-7538
+  - io.quarkus:quarkus-cli-common
+  - io.quarkus.junit:junit-virtual-threads
+allowed-extra-artifacts-bom-comparison:
+  - io.netty:netty-transport-native-epoll-aarch
+  - io.netty:netty-transport-native-epoll-ppcle
+  - io.netty:netty-transport-native-epoll-s390x
+  - io.netty:netty-transport-native-unix-common-ppcle
+  - io.netty:netty-transport-native-unix-common-s390x
