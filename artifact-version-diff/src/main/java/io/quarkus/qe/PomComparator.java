@@ -1,5 +1,6 @@
 package io.quarkus.qe;
 
+import io.quarkus.qe.utils.Configuration;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
@@ -25,15 +26,17 @@ public class PomComparator {
 
     private static final Logger LOG = Logger.getLogger(PomComparator.class.getName());
 
-    public PomComparator() throws IOException {
-        preparePlatformBoms();
+    public PomComparator(Configuration config) throws IOException {
+        preparePlatformBoms(config);
     }
 
-    public void preparePlatformBoms() throws IOException {
-        upstreamPlatformBom = PrepareOperation.getUpstreamBom();
-        rhbqPlatformBom = PrepareOperation.getRHBQBom();
-        if (!upstreamPlatformBom.toFile().exists() || !rhbqPlatformBom.toFile().exists()) {
-            throw new FileNotFoundException("The upstream or RHBQ platform bom doesn't exist");
+    public void preparePlatformBoms(Configuration config) throws IOException {
+        upstreamPlatformBom = PrepareOperation.getUpstreamBom(config);
+        rhbqPlatformBom = PrepareOperation.getRHBQBom(config);
+        if (!upstreamPlatformBom.toFile().exists()) {
+            throw new FileNotFoundException("The upstream platform bom doesn't exist " + upstreamPlatformBom);
+        } else if (!rhbqPlatformBom.toFile().exists()) {
+            throw new FileNotFoundException("The RHBQ platform bom doesn't exist" + rhbqPlatformBom);
         }
     }
 
@@ -42,6 +45,7 @@ public class PomComparator {
      * List for RHBQ additional/extra artifacts and List for artifacts with different versions.
      * The different version should be same as version comparison in GenerateVersionDiffReport.
      * However, this check is not that thorough as in GenerateVersionDiffReport
+     *
      * @throws IOException
      * @throws XmlPullParserException
      */
