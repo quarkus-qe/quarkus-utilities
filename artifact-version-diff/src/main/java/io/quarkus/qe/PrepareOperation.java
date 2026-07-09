@@ -2,12 +2,14 @@ package io.quarkus.qe;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import org.apache.commons.lang3.RandomStringUtils;
+import io.quarkus.qe.utils.Configuration;
+import io.quarkus.qe.utils.Repository;
+import io.quarkus.qe.utils.DependencyProcessor;
+import io.quarkus.qe.utils.VersionRetriever;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -27,35 +29,40 @@ public class PrepareOperation {
     public static final String ALLOWED_ARTIFACTS_BASE = "_allowed_artifacts.yaml";
     private static final Logger LOG = Logger.getLogger(PrepareOperation.class.getName());
 
-    public static String rhbqVersion;
-    public static String upstreamVersion;
-
     /**
      * Clone Quarkus repository with specific tag and execute `mvn versions:compare-dependencies`
+     *
      * @return path to directory which include Quarkus
      * @throws IOException
      */
-    public static Path prepareVersionPluginOutput() throws IOException {
-        String generatedRandomDirName = "artifact-comparison-" + RandomStringUtils.randomAlphabetic(5);
-        Path tmpDirectory = Files.createDirectories(Paths.get(System.getProperty("java.io.tmpdir"), generatedRandomDirName));
+    public static Path prepareVersionPluginOutput(Configuration config) throws IOException {
+        Path tmpDirectory = Files.createDirectories(config.getWorkingDirectory());
 
-        LOG.info("Cloning Quarkus repository");
-        String branch = Objects.requireNonNull(System.getProperty("quarkus.repo.tag"), "The quarkus.repo.tag property wasn't set.");
-        List<String> gitCloneQuarkus = new ArrayList<>(
-                Arrays.asList("git", "clone", "--depth",  "1", "--single-branch", "--branch", branch, "https://github.com/quarkusio/quarkus.git"));
-        executeProcess(gitCloneQuarkus, "Failed to clone Quarkus repository", tmpDirectory);
+        String branch = config.getUpstreamVersion();
 
-        LOG.info("Executing mvn versions:compare-dependencies");
-        List<String> mvnVersionsExecute = new ArrayList<>(Arrays.asList("mvn", "--batch-mode", "--no-transfer-progress", "versions:compare-dependencies"));
-        mvnVersionsExecute.addAll(prepareMavenProperties());
-        Path quarkusRepoDirectory = Paths.get(tmpDirectory.toAbsolutePath().toString(), "quarkus");
-        executeProcess(mvnVersionsExecute, "Error when executing versions:compare-dependencies plugin", quarkusRepoDirectory);
+        DependencyProcessor platform = new DependencyProcessor(Repository.PLATFORM,tmpDirectory);
+        platform.cloneRepo(branch);
+        VersionRetriever versions = VersionRetriever.getVersionsFromPlatform(platform.getDirectory().resolve("pom.xml"));
 
-        return quarkusRepoDirectory;
+        String remotePom = config.getPlatformBom();
+        DependencyProcessor core = new DependencyProcessor(Repository.CORE,tmpDirectory);
+        core.cloneRepo(versions.getQuarkusVersion());
+        core.compareVersions(remotePom);
+        if (config.isQuarkusVersionAtLeast(3,27)) { // we started testing mcp and langchain4j in 3.27
+            DependencyProcessor mcp = new DependencyProcessor(Repository.MCP,tmpDirectory);
+            mcp.cloneRepo(versions.getMcpVersion());
+            mcp.compareVersions(config.getMCPBom());
+
+            DependencyProcessor langchain = new DependencyProcessor(Repository.LANGCHAIN4J,tmpDirectory);
+            langchain.cloneRepo(versions.getLangChain4jVersion());
+            langchain.compareVersions(config.getQLC4JBom());
+        }
+        return tmpDirectory;
     }
 
+
     public static void executeProcess(List<String> command, String errorMsg, Path path) {
-        LOG.info("Executing " + command + ", " + path);
+        LOG.info("Executing " + String.join(" ", command) + ", " + path);
         ProcessBuilder builder = new ProcessBuilder(command);
         builder.directory(path.toFile());
         try {
@@ -76,19 +83,19 @@ public class PrepareOperation {
         }
     }
 
-    /**\
+    /**
+     * \
      * Prepare properties for versions maven plugin.
      * These properties are `maven.repo.local` (optional), `remotePom` and `reportOutputFile`
+     *
      * @return list containing the properties
      */
-    public static List<String> prepareMavenProperties() {
+    public static List<String> prepareMavenPropertiesForBom(String remotePom) {
         List<String> extraProperties = new ArrayList<>();
         String localRepo = Objects.requireNonNullElse(System.getProperty("maven.repo.local"), "");
         if (!localRepo.isEmpty()) {
             extraProperties.add("-Dmaven.repo.local=" + localRepo);
         }
-
-        String remotePom = Objects.requireNonNull(System.getProperty("quarkus.platform.bom"), "The quarkus.platform.bom wasn't set.");
         extraProperties.add("-DremotePom=" + remotePom);
 
         extraProperties.add("-DreportOutputFile=" + VERSION_PLUGIN_OUTPUT_FILE_NAME);
@@ -102,6 +109,7 @@ public class PrepareOperation {
 
     /**
      * Check for maven.repo.local property to propagated it. If the property is not set the default M2 home
+     *
      * @return String path to local repository
      */
     public static String getLocalRepository() {
@@ -114,12 +122,13 @@ public class PrepareOperation {
 
     /**
      * Download the upstream platform bom and return its path
+     *
      * @return path to downloaded platform bom
      */
-    public static Path getUpstreamBom() {
+    public static Path getUpstreamBom(Configuration config) {
         LOG.info("Executing mvn dependency:get");
-        upstreamVersion = Objects.requireNonNull(System.getProperty("quarkus.repo.tag"), "The quarkus.platform.bom wasn't set.");
 
+        String upstreamVersion = config.getUpstreamVersion();
         List<String> mvnVersionsExecute = new ArrayList<>(
                 Arrays.asList("mvn", "dependency:get", "-Dartifact=io.quarkus.platform:quarkus-bom:" + upstreamVersion + ":pom",
                         "-Dmaven.repo.local=" + getLocalRepository()));
@@ -131,11 +140,11 @@ public class PrepareOperation {
 
     /**
      * Get RHBQ platform bom from local repository and return its path
+     *
      * @return path to platform bom
      */
-    public static Path getRHBQBom() {
-        String platformBom = Objects.requireNonNull(System.getProperty("quarkus.platform.bom"), "The quarkus.platform.bom wasn't set.");
-        rhbqVersion = platformBom.substring(platformBom.lastIndexOf(":") + 1);
+    public static Path getRHBQBom(Configuration config) {
+        String rhbqVersion = config.getRHBQVersion();
         return Paths.get(getLocalRepository(), "com", "redhat", "quarkus", "platform", "quarkus-bom", rhbqVersion, "quarkus-bom-" + rhbqVersion + ".pom");
     }
 
@@ -160,6 +169,7 @@ public class PrepareOperation {
 
     /**
      * Load allowed artifact file as object for check if some artifacts are allowed
+     *
      * @return loaded yaml file as object
      */
     public static AllowedArtifacts loadAllowedArtifactFile() {
@@ -177,3 +187,4 @@ public class PrepareOperation {
         }
     }
 }
+

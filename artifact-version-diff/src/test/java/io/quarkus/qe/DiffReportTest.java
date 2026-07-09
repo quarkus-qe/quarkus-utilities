@@ -1,5 +1,6 @@
 package io.quarkus.qe;
 
+import io.quarkus.qe.utils.Configuration;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -30,9 +31,10 @@ public class DiffReportTest {
 //        PrepareOperation.upstreamVersion = "3.27.3";
 //        PrepareOperation.rhbqVersion = "3.27.3.redhat-00003";
 
-        Path quarkusRepoDirectory = PrepareOperation.prepareVersionPluginOutput();
+        Configuration config = new Configuration();
+        Path quarkusRepoDirectory = PrepareOperation.prepareVersionPluginOutput(config);
 
-        GenerateVersionDiffReport report = new GenerateVersionDiffReport(quarkusRepoDirectory, allowedArtifactsFile);
+        GenerateVersionDiffReport report = new GenerateVersionDiffReport(quarkusRepoDirectory, allowedArtifactsFile, config);
         report.generateReport();
         // Just check to throw exception for jenkins to mark builds differently
         Assertions.assertFalse(report.isMajorMinorVersionDiffer(),
@@ -43,8 +45,9 @@ public class DiffReportTest {
 
     @Test
     public void checkForDifferentArtifactsInPlatformBoms() throws IOException, XmlPullParserException {
-        GeneratePomComparison pomComparison = new GeneratePomComparison(allowedArtifactsFile);
-        pomComparison.generatePomComparisonReport();
+        Configuration config = new Configuration();
+        GeneratePomComparison pomComparison = new GeneratePomComparison(allowedArtifactsFile, config);
+        pomComparison.generatePomComparisonReport(config);
         Assertions.assertTrue(pomComparison.isAllArtifactAreAllowed(),
                 "There are new missing/additional artifacts differ in platform bom. Check the output for more info. " +
                         "Marking as failure");

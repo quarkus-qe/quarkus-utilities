@@ -1,0 +1,1074 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <groupId>org.jboss</groupId>
+        <artifactId>jboss-parent</artifactId>
+        <version>49</version>
+    </parent>
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.quarkus.platform</groupId>
+    <artifactId>quarkus-platform-config</artifactId>
+    <name>Quarkus Platform - Configuration pom</name>
+    <version>999-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <description>Quarkus Universe platform aggregates extensions from Quarkus Core and those developed by the community into a single compatible and versioned set that application developers can reference from their applications to align the dependency versions</description>
+    <url>https://github.com/quarkusio/quarkus-platform</url>
+
+    <developers>
+        <developer>
+            <id>quarkus</id>
+            <name>Quarkus Community</name>
+            <organization>Quarkus</organization>
+            <organizationUrl>https://quarkus.io</organizationUrl>
+        </developer>
+    </developers>
+
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <url>https://github.com/quarkusio/quarkus-platform</url>
+        <connection>scm:git:git@github.com:quarkusio/quarkus-platform.git</connection>
+        <developerConnection>scm:git:git@github.com:quarkusio/quarkus-platform.git</developerConnection>
+        <tag>HEAD</tag>
+    </scm>
+
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/quarkusio/quarkus/issues/</url>
+    </issueManagement>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.release>17</maven.compiler.release>
+        <maven.compiler.parameters>true</maven.compiler.parameters>
+
+        <graalvmHome>${env.GRAALVM_HOME}</graalvmHome>
+        <postgres.url>jdbc:postgresql:hibernate_orm_test</postgres.url>
+
+        <quarkus.version>3.27.4</quarkus.version>
+        <quarkus-bom.version>${quarkus.version}</quarkus-bom.version>
+
+        <camel-quarkus.version>3.27.4</camel-quarkus.version>
+        <camel-quarkus-test-list.version>${camel-quarkus.version}</camel-quarkus-test-list.version>
+
+        <!-- If you made changes to the integration tests pom of Amazon Services,
+             make sure you have a look at the AmazonServices member section below
+             and also at src/main/resources/xslt/amazon-services/test-pom.xsl
+             as they might require adjustments. -->
+        <quarkus-amazon-services.version>3.9.2</quarkus-amazon-services.version>
+        <quarkus-cxf.version>3.27.2</quarkus-cxf.version>
+        <quarkus-config-consul.version>2.2.2</quarkus-config-consul.version>
+        <quarkus-qpid-jms.version>2.10.0</quarkus-qpid-jms.version>
+        <quarkus-qpid-jms-tests.version>${quarkus-qpid-jms.version}</quarkus-qpid-jms-tests.version>
+        <quarkus-hazelcast-client.version>4.1.0</quarkus-hazelcast-client.version>
+        <debezium-quarkus-outbox.version>3.2.1.Final</debezium-quarkus-outbox.version>
+        <quarkus-blaze-persistence.version>1.6.17</quarkus-blaze-persistence.version>
+        <quarkus-cassandra-client.version>1.3.1</quarkus-cassandra-client.version>
+        <quarkus-cassandra-client-test.version>${quarkus-cassandra-client.version}</quarkus-cassandra-client-test.version>
+        <quarkus-qute-web.version>3.4.5</quarkus-qute-web.version>
+
+        <drools-quarkus.version>8.33.0.Final</drools-quarkus.version>
+        <optaplanner-quarkus.version>9.37.0.Final</optaplanner-quarkus.version>
+
+        <quarkus-google-cloud-services.version>2.18.0</quarkus-google-cloud-services.version>
+        <quarkus-vault.version>4.4.0</quarkus-vault.version>
+        <quarkus-operator-sdk.version>7.2.3</quarkus-operator-sdk.version>
+        <quarkus-langchain4j.version>1.2.5</quarkus-langchain4j.version>
+        <quarkus-mcp-server.version>1.7.3</quarkus-mcp-server.version>
+
+        <quarkus-platform-bom-generator.version>0.0.132</quarkus-platform-bom-generator.version>
+        <maven-deploy-plugin.version>3.1.4</maven-deploy-plugin.version>
+        <maven-gpg-plugin.version>3.2.7</maven-gpg-plugin.version>
+        <maven-javadoc-plugin.version>3.11.2</maven-javadoc-plugin.version>
+        <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
+        <build-helper-maven-plugin.version>3.6.0</build-helper-maven-plugin.version>
+        <maven-plugin-plugin.version>3.15.1</maven-plugin-plugin.version>
+        <version.surefire.plugin>3.0.0</version.surefire.plugin>
+        <failsafe-plugin.version>${version.surefire.plugin}</failsafe-plugin.version>
+        <useReleaseProfile>true</useReleaseProfile>
+
+        <!-- the group-id (and the platform key) for the generated platform artifacts -->
+        <platform.groupId>${project.groupId}</platform.groupId>
+        <platform.version>${project.version}</platform.version>
+
+        <!-- descriptor overrides -->
+        <resourcesdir>${project.basedir}/src/main/resources</resourcesdir>
+        <overridesfile>${resourcesdir}/extensions-overrides.json</overridesfile>
+        <dollarSign>$</dollarSign>
+    </properties>
+
+    <distributionManagement>
+        <repository>
+            <id>quarkus-publish</id>
+            <name>Quarkus Releases</name>
+            <url>https://repo.maven.apache.org/maven2</url>
+        </repository>
+        <snapshotRepository>
+            <id>quarkus-publish</id>
+            <name>Quarkus Snapshots</name>
+            <url>https://central.sonatype.com/repository/maven-snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+    <build>
+        <extensions>
+            <extension>
+                <groupId>io.quarkus.bot</groupId>
+                <artifactId>build-reporter-maven-extension</artifactId>
+                <version>2.3.1</version>
+            </extension>
+            <extension>
+                <groupId>kr.motd.maven</groupId>
+                <artifactId>os-maven-plugin</artifactId>
+                <version>1.7.1</version>
+            </extension>
+        </extensions>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>build-helper-maven-plugin</artifactId>
+                    <version>${build-helper-maven-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${version.surefire.plugin}</version>
+                    <configuration>
+                        <systemPropertyVariables>
+                            <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+                        </systemPropertyVariables>
+                        <excludedGroups>quarkus-platform-ignore</excludedGroups>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>${version.failsafe.plugin}</version>
+                    <configuration>
+                        <excludedGroups>quarkus-platform-ignore</excludedGroups>
+                        <systemPropertyVariables>
+                            <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+                        </systemPropertyVariables>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-plugin-plugin</artifactId>
+                    <version>${maven-plugin-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>io.quarkus</groupId>
+                    <artifactId>quarkus-platform-bom-maven-plugin</artifactId>
+                    <version>${quarkus-platform-bom-generator.version}</version>
+                    <configuration>
+                        <platformConfig>
+                            <!-- the platform release info -->
+                            <release>
+                                <!-- the platform (dev stack) key (if not specified, defaults to the root project's groudId) -->
+                                <platformKey>${platform.groupId}</platformKey>
+                                <!--
+                                    | platform stream id, representing the flow of backward compatible releases (if not specified, defaults to the project's major.minor platform version)
+                                -->
+                                <!-- stream>2.0</stream -->
+                                <!-- platform release  version, must be unique in the scope of the stream, (if not specified, defaults to the platform version) -->
+                                <version>${platform.version}</version>
+                            </release>
+                            <!-- Universal / all-inclusive platform -->
+                            <universal>
+                                <!-- coordinates of the generated all-inclusive platform BOM -->
+                                <bom>io.quarkus:quarkus-universe-bom:${project.version}</bom>
+                                <!-- whether to skip installation of the all-inclusive platform BOM -->
+                                <skipInstall>false</skipInstall>
+                            </universal>
+                            <!-- Quarkus core -->
+                            <core>
+                                <name>Core</name>
+                                <bom>io.quarkus:quarkus-bom:${quarkus-bom.version}</bom>
+                                <dependencyManagement>
+                                    <!-- Extra constraints -->
+                                    <!-- Consul config -->
+                                    <dependency>io.quarkiverse.config:quarkus-config-consul:${quarkus-config-consul.version}</dependency>
+                                    <dependency>io.quarkiverse.config:quarkus-config-consul-deployment:${quarkus-config-consul.version}</dependency>
+                                    <!-- Vault -->
+                                    <dependency>io.quarkiverse.vault:quarkus-vault:${quarkus-vault.version}</dependency>
+                                    <dependency>io.quarkiverse.vault:quarkus-vault-deployment:${quarkus-vault.version}</dependency>
+                                    <dependency>io.quarkiverse.vault:quarkus-vault-model:${quarkus-vault.version}</dependency>
+                                    <!-- Qute Web -->
+                                    <dependency>io.quarkiverse.qute.web:quarkus-qute-web:${quarkus-qute-web.version}</dependency>
+                                    <dependency>io.quarkiverse.qute.web:quarkus-qute-web-deployment:${quarkus-qute-web.version}</dependency>
+                                </dependencyManagement>
+                                <extensionGroupIds>
+                                    <groupId>io.quarkus</groupId>
+                                    <groupId>io.quarkiverse.config</groupId>
+                                    <groupId>io.quarkiverse.vault</groupId>
+                                    <groupId>io.quarkiverse.qute.web</groupId>
+                                </extensionGroupIds>
+                                <release>
+                                    <lastDetectedBomUpdate>io.quarkus.platform:quarkus-bom:3.27.4</lastDetectedBomUpdate>
+                                    <next>${platform.groupId}:quarkus-bom:${platform.version}</next>
+                                </release>
+                                <tests>
+                                    <test>
+                                        <artifact>io.quarkiverse.config:quarkus-config-extensions-integration-test-consul:${quarkus-config-consul.version}</artifact>
+                                    </test>
+                                    <test>
+                                        <artifact>io.quarkiverse.vault:quarkus-vault-integration-test:${quarkus-vault.version}</artifact>
+                                        <mavenFailsafePlugin>true</mavenFailsafePlugin>
+                                        <copyTasks>
+                                            <copy>
+                                                <src>src/main/resources/core/test/resources/vault/vault-tls.crt</src>
+                                                <destination>generated-platform-project/quarkus/integration-tests/quarkus-vault-integration-test/src/test/resources/vault-tls.crt</destination>
+                                            </copy>
+                                        </copyTasks>
+                                    </test>
+                                    <test>
+                                        <artifact>io.quarkiverse.vault:quarkus-vault-integration-test-agroal:${quarkus-vault.version}</artifact>
+                                        <mavenFailsafePlugin>true</mavenFailsafePlugin>
+                                    </test>
+                                    <test>
+                                        <skip>true</skip>
+                                        <artifact>io.quarkiverse.vault:quarkus-vault-integration-test-app:${quarkus-vault.version}</artifact>
+                                        <systemProperties>
+                                            <vault-test-extension.use-tls>false</vault-test-extension.use-tls>
+                                        </systemProperties>
+                                    </test>
+                                </tests>
+                            </core>
+                            <!-- Platform members -->
+                            <members>
+                                <!-- TODO Quarkus 3: uncomment and fix nested comments
+                                <member>
+                                    <name>Drools</name>
+                                    <bom>org.kie:drools-build-parent:${drools-quarkus.version}</bom>
+                                    <release>
+                                        <lastDetectedBomUpdate>io.quarkus.platform:quarkus-drools-bom:2.16.0.CR1</lastDetectedBomUpdate>
+                                        <next>${platform.groupId}:quarkus-drools-bom:${platform.version}</next>
+                                    </release>
+                                    <defaultTestConfig>
+                                        <mavenFailsafePlugin>true</mavenFailsafePlugin>
+                                        <jvmExcludes>
+                                            <exclude>**/Native*</exclude>
+                                        </jvmExcludes>
+                                        <skip>false</skip>
+                                    </defaultTestConfig>
+                                    <tests>
+                                        <test>
+                                            <packageApplication>true</packageApplication>
+                                            <artifact>org.drools:drools-drl-quarkus-integration-test:${drools-quarkus.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <packageApplication>true</packageApplication>
+                                            <artifact>org.drools:drools-drl-quarkus-integration-test-hotreload:${drools-quarkus.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <packageApplication>true</packageApplication>
+                                            <artifact>org.drools:drools-drl-quarkus-ruleunit-integration-test:${drools-quarkus.version}</artifact>
+                                        </test>
+                                    </tests>
+                                </member>
+                                <member>
+                                    <name>OptaPlanner</name>
+                                    <bom>org.optaplanner:optaplanner-build-parent:${optaplanner-quarkus.version}</bom>
+                                    <release>
+                                        <lastDetectedBomUpdate>io.quarkus.platform:quarkus-optaplanner-bom:3.3.0</lastDetectedBomUpdate>
+                                        <next>${platform.groupId}:quarkus-optaplanner-bom:${platform.version}</next>
+                                    </release>
+                                    <defaultTestConfig>
+                                        <skip>false</skip>
+                                    </defaultTestConfig>
+                                    <tests>
+                                        <test>
+                                            <artifact>org.optaplanner:optaplanner-quarkus-integration-test:${optaplanner-quarkus.version}</artifact>
+                                        </test>
+                                        <!- - TODO: enable when a compatible version of Drools becomes a part of the platform.
+                                        <test>
+                                            <artifact>org.optaplanner:optaplanner-quarkus-drl-integration-test:${optaplanner-quarkus.version}</artifact>
+                                        </test>- ->
+                                        <test>
+                                            <artifact>org.optaplanner:optaplanner-quarkus-devui-integration-test:${optaplanner-quarkus.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>org.optaplanner:optaplanner-quarkus-jackson-integration-test:${optaplanner-quarkus.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>org.optaplanner:optaplanner-quarkus-jsonb-integration-test:${optaplanner-quarkus.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>org.optaplanner:optaplanner-quarkus-benchmark-integration-test:${optaplanner-quarkus.version}</artifact>
+                                        </test>
+                                    </tests>
+                                </member>
+                                -->
+                                <member>
+                                    <name>QpidJMS</name>
+                                    <bom>org.amqphub.quarkus:quarkus-qpid-jms-bom:${quarkus-qpid-jms.version}</bom>
+                                    <release>
+                                        <lastDetectedBomUpdate>io.quarkus.platform:quarkus-qpid-jms-bom:3.27.0</lastDetectedBomUpdate>
+                                        <next>${platform.groupId}:quarkus-qpid-jms-bom:${platform.version}</next>
+                                    </release>
+                                    <ownGroupIds>
+                                        <groupId>org.amqphub.quarkus</groupId>
+                                        <groupId>org.apache.qpid</groupId>
+                                    </ownGroupIds>
+                                    <tests>
+                                        <test>
+                                            <artifact>org.amqphub.quarkus:quarkus-qpid-jms-integration-tests:${quarkus-qpid-jms-tests.version}</artifact>
+                                        </test>
+                                    </tests>
+                                </member>
+                                <member>
+                                    <name>Cassandra</name>
+                                    <bom>com.datastax.oss.quarkus:cassandra-quarkus-bom:${quarkus-cassandra-client.version}</bom>
+                                    <ownGroupIds>
+                                        <groupId>com.datastax.oss</groupId>
+                                        <groupId>com.datastax.oss.quarkus</groupId>
+                                    </ownGroupIds>
+                                    <release>
+                                        <lastDetectedBomUpdate>io.quarkus.platform:quarkus-cassandra-bom:3.27.2</lastDetectedBomUpdate>
+                                        <next>${platform.groupId}:quarkus-cassandra-bom:${platform.version}</next>
+                                    </release>
+                                    <defaultTestConfig>
+                                        <skip>false</skip>
+                                        <mavenFailsafePlugin>true</mavenFailsafePlugin>
+                                        <groups>!native</groups>
+                                        <nativeGroups>native</nativeGroups>
+                                    </defaultTestConfig>
+                                    <tests>
+                                        <test>
+                                            <artifact>com.datastax.oss.quarkus:cassandra-quarkus-integration-tests-main:${quarkus-cassandra-client-test.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>com.datastax.oss.quarkus:cassandra-quarkus-integration-tests-metrics-disabled:${quarkus-cassandra-client-test.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>com.datastax.oss.quarkus:cassandra-quarkus-integration-tests-metrics-microprofile:${quarkus-cassandra-client-test.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>com.datastax.oss.quarkus:cassandra-quarkus-integration-tests-no-mapper:${quarkus-cassandra-client-test.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>com.datastax.oss.quarkus:cassandra-quarkus-integration-tests-dse:${quarkus-cassandra-client-test.version}</artifact>
+                                        </test>
+                                    </tests>
+                                </member>
+                                <member>
+                                    <name>AmazonServices</name>
+                                    <bom>io.quarkiverse.amazonservices:quarkus-amazon-services-bom:${quarkus-amazon-services.version}</bom>
+                                    <ownGroupIds>
+                                        <groupId>io.quarkiverse.amazonservices</groupId>
+                                        <groupId>software.amazon.awssdk</groupId>
+                                    </ownGroupIds>
+                                    <release>
+                                        <lastDetectedBomUpdate>io.quarkus.platform:quarkus-amazon-services-bom:3.27.3</lastDetectedBomUpdate>
+                                        <next>${platform.groupId}:quarkus-amazon-services-bom:${platform.version}</next>
+                                    </release>
+                                    <tests>
+                                        <test>
+                                            <artifact>io.quarkiverse.amazonservices:quarkus-amazon-services-integration-tests:${quarkus-amazon-services.version}</artifact>
+                                        </test>
+                                    </tests>
+                                </member>
+                                <member>
+                                    <name>CXF</name>
+                                    <bom>io.quarkiverse.cxf:quarkus-cxf-bom:${quarkus-cxf.version}</bom>
+                                    <release>
+                                        <lastDetectedBomUpdate>io.quarkus.platform:quarkus-cxf-bom:3.27.4</lastDetectedBomUpdate>
+                                        <next>${platform.groupId}:quarkus-cxf-bom:${platform.version}</next>
+                                    </release>
+                                    <defaultTestConfig>
+                                        <skip>false</skip>
+                                        <transformWith>${resourcesdir}/xslt/cxf-test-pom.xsl</transformWith>
+                                    </defaultTestConfig>
+                                    <testCatalogArtifact>io.quarkiverse.cxf:quarkus-cxf-test-list::xml:${quarkus-cxf.version}</testCatalogArtifact>
+                                </member>
+                                <member>
+                                    <name>Camel</name>
+                                    <bom>org.apache.camel.quarkus:camel-quarkus-bom:${camel-quarkus.version}</bom>
+                                    <release>
+                                        <lastDetectedBomUpdate>io.quarkus.platform:quarkus-camel-bom:3.27.4</lastDetectedBomUpdate>
+                                        <next>${platform.groupId}:quarkus-camel-bom:${platform.version}</next>
+                                    </release>
+                                    <defaultTestConfig>
+                                        <skip>false</skip>
+                                        <transformWith>${resourcesdir}/xslt/camel-test-pom.xsl</transformWith>
+                                    </defaultTestConfig>
+                                    <testCatalogArtifact>org.apache.camel.quarkus:camel-quarkus-test-list::xml:${camel-quarkus-test-list.version}</testCatalogArtifact>
+                                    <tests>
+                                        <test><!-- Workaround for weird issue with shared networking & keycloak container -->
+                                            <skip>true</skip>
+                                            <artifact>org.apache.camel.quarkus:camel-quarkus-integration-test-kafka-oauth:${camel-quarkus-test-list.version}</artifact>
+                                        </test>
+                                        <test><!-- Disabled due to https://github.com/apache/camel-quarkus/issues/6517 -->
+                                            <skip>true</skip>
+                                            <artifact>org.apache.camel.quarkus:camel-quarkus-integration-test-debezium-grouped:${camel-quarkus-test-list.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <!-- Workaround flaky Kudu test: https://github.com/apache/camel-quarkus/issues/4259 -->
+                                            <skip>true</skip>
+                                            <artifact>org.apache.camel.quarkus:camel-quarkus-integration-test-kudu:${camel-quarkus-test-list.version}</artifact>
+                                        </test>
+                                        <test><!-- Workaround temporary WIP Camel 4 https://github.com/apache/camel-quarkus/issues/4462 -->
+                                            <excluded>true</excluded>
+                                            <artifact>org.apache.camel.quarkus:camel-quarkus-integration-test-avro-rpc:${camel-quarkus-test-list.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>org.apache.camel.quarkus:camel-quarkus-integration-test-jt400-mocked:${camel-quarkus-test-list.version}</artifact>
+                                            <systemProperties>
+                                                <quarkus.test.flat-class-path>true</quarkus.test.flat-class-path>
+                                            </systemProperties>
+                                        </test>
+                                        <test>
+                                            <artifact>org.apache.camel.quarkus:camel-quarkus-integration-test-cxf-soap-grouped:${camel-quarkus-test-list.version}</artifact>
+                                            <jvmExcludes>**/CxfSoapWssClientTest.java</jvmExcludes>
+                                            <nativeExcludes>**/CxfSoapWssClientTest.java</nativeExcludes>
+                                        </test>
+                                    </tests>
+                                </member>
+                                <member>
+                                    <name>Hazelcast</name>
+                                    <bom>com.hazelcast:quarkus-hazelcast-client:${quarkus-hazelcast-client.version}</bom>
+                                    <release>
+                                        <lastDetectedBomUpdate>io.quarkus.platform:quarkus-hazelcast-client:3.27.0.CR1</lastDetectedBomUpdate>
+                                        <next>${platform.groupId}:quarkus-hazelcast-client:${platform.version}</next>
+                                    </release>
+                                    <defaultTestConfig>
+                                        <skip>false</skip>
+                                        <transformWith>${resourcesdir}/xslt/hazelcast-test-pom.xsl</transformWith>
+                                    </defaultTestConfig>
+                                    <tests>
+                                        <test>
+                                            <artifact>com.hazelcast:quarkus-hazelcast-client-integration-tests:${quarkus-hazelcast-client.version}</artifact>
+                                        </test>
+                                    </tests>
+                                </member>
+                                <member>
+                                    <name>Debezium-Outbox</name>
+                                    <ownGroupIds>
+                                        <groupId>io.debezium</groupId>
+                                    </ownGroupIds>
+                                    <dependencyManagement>
+                                        <dependency>io.debezium:debezium-quarkus-outbox:${debezium-quarkus-outbox.version}</dependency>
+                                        <dependency>io.debezium:debezium-quarkus-outbox-deployment:${debezium-quarkus-outbox.version}</dependency>
+                                        <dependency>io.debezium:debezium-quarkus-outbox-reactive:${debezium-quarkus-outbox.version}</dependency>
+                                        <dependency>io.debezium:debezium-quarkus-outbox-reactive-deployment:${debezium-quarkus-outbox.version}</dependency>
+                                        <dependency>io.debezium:debezium-api:${debezium-quarkus-outbox.version}</dependency>
+                                        <dependency>io.debezium:debezium-connector-cassandra:${debezium-quarkus-outbox.version}</dependency>
+                                        <dependency>io.debezium:debezium-connector-db2:${debezium-quarkus-outbox.version}</dependency>
+                                        <dependency>io.debezium:debezium-connector-ibmi:${debezium-quarkus-outbox.version}</dependency>
+                                        <dependency>io.debezium:debezium-connector-informix:${debezium-quarkus-outbox.version}</dependency>
+                                        <dependency>io.debezium:debezium-connector-mongodb:${debezium-quarkus-outbox.version}</dependency>
+                                        <dependency>io.debezium:debezium-connector-mysql:${debezium-quarkus-outbox.version}</dependency>
+                                        <dependency>io.debezium:debezium-connector-oracle:${debezium-quarkus-outbox.version}</dependency>
+                                        <dependency>io.debezium:debezium-connector-postgres:${debezium-quarkus-outbox.version}</dependency>
+                                        <dependency>io.debezium:debezium-connector-sqlserver:${debezium-quarkus-outbox.version}</dependency>
+                                        <dependency>io.debezium:debezium-connector-vitess:${debezium-quarkus-outbox.version}</dependency>
+                                        <dependency>io.debezium:debezium-core:${debezium-quarkus-outbox.version}</dependency>
+                                        <dependency>io.debezium:debezium-ddl-parser:${debezium-quarkus-outbox.version}</dependency>
+                                        <dependency>io.debezium:debezium-embedded:${debezium-quarkus-outbox.version}</dependency>
+                                        <dependency>io.debezium:debezium-scripting:${debezium-quarkus-outbox.version}</dependency>
+                                    </dependencyManagement>
+                                    <release>
+                                        <lastDetectedBomUpdate>io.quarkus.platform:quarkus-debezium-bom:3.26.0</lastDetectedBomUpdate>
+                                        <next>${platform.groupId}:quarkus-debezium-bom:${platform.version}</next>
+                                    </release>
+                                    <tests>
+                                        <test>
+                                            <skip>true</skip>
+                                            <artifact>io.debezium:debezium-quarkus-outbox-integration-tests:${debezium-quarkus-outbox.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <skip>true</skip>
+                                            <artifact>io.debezium:debezium-quarkus-outbox-reactive-integration-tests:${debezium-quarkus-outbox.version}</artifact>
+                                        </test>
+                                    </tests>
+                                </member>
+                                <member>
+                                    <name>Blaze-Persistence</name>
+                                    <dependencyManagement>
+                                        <dependency>com.blazebit:blaze-persistence-integration-quarkus-3:${quarkus-blaze-persistence.version}</dependency>
+                                        <dependency>com.blazebit:blaze-persistence-integration-quarkus-3-deployment:${quarkus-blaze-persistence.version}</dependency>
+                                        <dependency>com.blazebit:blaze-persistence-entity-view-processor-jakarta:${quarkus-blaze-persistence.version}</dependency>
+                                        <dependency>com.blazebit:blaze-persistence-integration-hibernate-7.1:${quarkus-blaze-persistence.version}</dependency>
+                                    </dependencyManagement>
+                                    <release>
+                                        <lastDetectedBomUpdate>io.quarkus.platform:quarkus-blaze-persistence-bom:3.26.2</lastDetectedBomUpdate>
+                                        <next>${platform.groupId}:quarkus-blaze-persistence-bom:${platform.version}</next>
+                                    </release>
+                                    <defaultTestConfig>
+                                        <skip>false</skip>
+                                        <dependencies>
+                                            <dependency>io.quarkus:quarkus-jdbc-h2:${quarkus.version}</dependency>
+                                        </dependencies>
+                                        <testDependencies>
+                                            <dependency>io.quarkus:quarkus-test-h2:${quarkus.version}</dependency>
+                                        </testDependencies>
+                                    </defaultTestConfig>
+                                    <tests>
+                                        <test>
+                                            <skip>false</skip>
+                                            <skipNative>true</skipNative>
+                                            <skipJvm>false</skipJvm>
+                                            <artifact>com.blazebit:blaze-persistence-examples-quarkus-3-testsuite-base:${quarkus-blaze-persistence.version}</artifact>
+                                            <systemProperties>
+                                                <quarkus.test.profile>h2</quarkus.test.profile>
+                                            </systemProperties>
+                                        </test>
+                                        <test>
+                                            <skip>false</skip>
+                                            <skipNative>false</skipNative>
+                                            <skipJvm>true</skipJvm>
+                                            <artifact>com.blazebit:blaze-persistence-examples-quarkus-3-testsuite-native-h2:${quarkus-blaze-persistence.version}</artifact>
+                                        </test>
+                                    </tests>
+                                </member>
+                                <member>
+                                    <name>GoogleCloudServices</name>
+                                    <bom>io.quarkiverse.googlecloudservices:quarkus-google-cloud-services-bom:${quarkus-google-cloud-services.version}</bom>
+                                    <release>
+                                        <lastDetectedBomUpdate>io.quarkus.platform:quarkus-google-cloud-services-bom:3.27.0</lastDetectedBomUpdate>
+                                        <next>${platform.groupId}:quarkus-google-cloud-services-bom:${platform.version}</next>
+                                    </release>
+                                    <defaultTestConfig>
+                                        <skip>false</skip>
+                                        <jvmArgLine>--add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED</jvmArgLine>
+                                    </defaultTestConfig>
+                                    <tests>
+                                        <test>
+                                            <artifact>io.quarkiverse.googlecloudservices:quarkus-google-cloud-services-main-it:${quarkus-google-cloud-services.version}</artifact>
+                                        </test>
+                                    </tests>
+                                </member>
+                                <member>
+                                    <name>OperatorSDK</name>
+                                    <!-- incompatible with Quarkus 3.0.1.Final -->
+                                    <enabled>true</enabled>
+                                    <bom>io.quarkiverse.operatorsdk:quarkus-operator-sdk-bom:${quarkus-operator-sdk.version}</bom>
+                                    <release>
+                                        <lastDetectedBomUpdate>io.quarkus.platform:quarkus-operator-sdk-bom:3.27.2</lastDetectedBomUpdate>
+                                        <next>${platform.groupId}:quarkus-operator-sdk-bom:${platform.version}</next>
+                                    </release>
+                                    <defaultTestConfig>
+                                        <skip>false</skip>
+                                    </defaultTestConfig>
+                                    <tests>
+                                        <test>
+                                            <artifact>io.quarkiverse.operatorsdk:quarkus-operator-sdk-integration-tests:${quarkus-operator-sdk.version}</artifact>
+                                            <environmentVariables>
+                                                <NAMESPACE_FROM_ENV>fromEnvVarNS</NAMESPACE_FROM_ENV>
+                                                <QUARKUS_OPERATOR_SDK_CONTROLLERS_EMPTY_NAMESPACES>fromEnv1,fromEnv2</QUARKUS_OPERATOR_SDK_CONTROLLERS_EMPTY_NAMESPACES>
+                                                <VARIABLE_NS_ENV>variableNSFromEnv</VARIABLE_NS_ENV>
+                                                <QUARKUS_OPERATOR_SDK_CONTROLLERS_KEYCLOAKCONTROLLER_NAMESPACES>JOSDK_ALL_NAMESPACES</QUARKUS_OPERATOR_SDK_CONTROLLERS_KEYCLOAKCONTROLLER_NAMESPACES>
+                                            </environmentVariables>
+                                        </test>
+                                    </tests>
+                                </member>
+                                <member>
+                                    <name>LangChain4j</name>
+                                    <bom>io.quarkiverse.langchain4j:quarkus-langchain4j-bom:${quarkus-langchain4j.version}</bom>
+                                    <dependencyManagement>
+                                        <!-- override opennlp-tools due to CVEs -->
+                                        <dependency>org.apache.opennlp:opennlp-tools:2.5.9</dependency>
+                                    </dependencyManagement>
+                                    <release>
+                                        <lastDetectedBomUpdate>io.quarkus.platform:quarkus-langchain4j-bom:3.27.4</lastDetectedBomUpdate>
+                                        <next>${platform.groupId}:quarkus-langchain4j-bom:${platform.version}</next>
+                                    </release>
+                                    <tests>
+                                        <test>
+                                            <artifact>io.quarkiverse.langchain4j:quarkus-langchain4j-integration-test-ai-gemini:${quarkus-langchain4j.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>io.quarkiverse.langchain4j:quarkus-langchain4j-integration-test-anthropic:${quarkus-langchain4j.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>io.quarkiverse.langchain4j:quarkus-langchain4j-integration-test-azure-openai:${quarkus-langchain4j.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>io.quarkiverse.langchain4j:quarkus-langchain4j-integration-test-devui-multiple-embedding-models:${quarkus-langchain4j.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>io.quarkiverse.langchain4j:quarkus-langchain4j-integration-test-devui:${quarkus-langchain4j.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>io.quarkiverse.langchain4j:quarkus-langchain4j-integration-test-easy-rag:${quarkus-langchain4j.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>io.quarkiverse.langchain4j:quarkus-langchain4j-integration-test-hugging-face:${quarkus-langchain4j.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>io.quarkiverse.langchain4j:quarkus-langchain4j-integration-test-embed-all-minilm-l6-v2-q:${quarkus-langchain4j.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>io.quarkiverse.langchain4j:quarkus-langchain4j-integration-test-embed-all-minilm-l6-v2:${quarkus-langchain4j.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>io.quarkiverse.langchain4j:quarkus-langchain4j-integration-test-embed-bge-small-en-q:${quarkus-langchain4j.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>io.quarkiverse.langchain4j:quarkus-langchain4j-integration-test-embed-bge-small-en-v15-q:${quarkus-langchain4j.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>io.quarkiverse.langchain4j:quarkus-langchain4j-integration-test-embed-bge-small-en-v15:${quarkus-langchain4j.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>io.quarkiverse.langchain4j:quarkus-langchain4j-integration-test-embed-bge-small-en:${quarkus-langchain4j.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>io.quarkiverse.langchain4j:quarkus-langchain4j-integration-test-embed-e5-small-v2-q:${quarkus-langchain4j.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>io.quarkiverse.langchain4j:quarkus-langchain4j-integration-test-embed-e5-small-v2:${quarkus-langchain4j.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>io.quarkiverse.langchain4j:quarkus-langchain4j-integration-test-jlama:${quarkus-langchain4j.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>io.quarkiverse.langchain4j:quarkus-langchain4j-integration-test-llama3-java:${quarkus-langchain4j.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>io.quarkiverse.langchain4j:quarkus-langchain4j-integration-test-mcp:${quarkus-langchain4j.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>io.quarkiverse.langchain4j:quarkus-langchain4j-integration-test-mistralai:${quarkus-langchain4j.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>io.quarkiverse.langchain4j:quarkus-langchain4j-integration-tests-multiple-providers:${quarkus-langchain4j.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>io.quarkiverse.langchain4j:quarkus-langchain4j-integration-test-ollama:${quarkus-langchain4j.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>io.quarkiverse.langchain4j:quarkus-langchain4j-integration-test-openai:${quarkus-langchain4j.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>io.quarkiverse.langchain4j:quarkus-langchain4j-integration-test-rag-pgvector-flyway:${quarkus-langchain4j.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>io.quarkiverse.langchain4j:quarkus-langchain4j-integration-test-rag-pgvector:${quarkus-langchain4j.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>io.quarkiverse.langchain4j:quarkus-langchain4j-integration-test-rag:${quarkus-langchain4j.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>io.quarkiverse.langchain4j:quarkus-langchain4j-integration-test-simple-ollama:${quarkus-langchain4j.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>io.quarkiverse.langchain4j:quarkus-langchain4j-integration-test-tools:${quarkus-langchain4j.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>io.quarkiverse.langchain4j:quarkus-langchain4j-integration-test-vertex-ai-gemini:${quarkus-langchain4j.version}</artifact>
+                                        </test>
+                                    </tests>
+                                </member>
+                                <member>
+                                    <name>MCPServer</name>
+                                    <bom>io.quarkiverse.mcp:quarkus-mcp-server-bom:${quarkus-mcp-server.version}</bom>
+                                    <ownGroupIds>
+                                        <ownGroupId>io.quarkiverse.mcp</ownGroupId>
+                                    </ownGroupIds>
+                                    <release>
+                                        <lastDetectedBomUpdate>io.quarkus.platform:quarkus-mcp-server-bom:3.27.4</lastDetectedBomUpdate>
+                                        <next>${platform.groupId}:quarkus-mcp-server-bom:${platform.version}</next>
+                                    </release>
+                                    <defaultTestConfig>
+                                        <mavenFailsafePlugin>true</mavenFailsafePlugin>
+                                        <packageApplication>true</packageApplication>
+                                    </defaultTestConfig>
+                                    <tests>
+                                        <test>
+                                            <artifact>io.quarkiverse.mcp:quarkus-mcp-server-sse-integration-tests:${quarkus-mcp-server.version}</artifact>
+                                        </test>
+                                        <test>
+                                            <artifact>io.quarkiverse.mcp:quarkus-mcp-server-stdio-integration-tests:${quarkus-mcp-server.version}</artifact>
+                                        </test>
+                                    </tests>
+                                </member>
+                            </members>
+                            <!-- Platform BOM generator configuration -->
+                            <bomGenerator>
+                                <!-- Config to enforce specific versions and excluding dependencies -->
+                                <!--
+                                <enforcedDependencies>
+                                    <dependency>groupId:artifactId:desired-version</dependency>
+                                </enforcedDependencies>
+                                <excludedDependencies>
+                                    <dependency>groupId:artifactId</dependency>
+                                </excludedDependencies>
+                                <excludedGroups>
+                                    <excludedGroup>groupId</excludedGroup>
+                                </excludedGroups>
+                                -->
+                                <excludedDependencies>
+                                    <dependency>io.quarkus:quarkus-bom-quarkus-platform-descriptor:${quarkus-bom.version}:json</dependency>
+                                    <dependency>io.quarkus:quarkus-bom-quarkus-platform-properties::properties</dependency>
+                                    <dependency>com.oracle.instantclient:xstreams</dependency> <!-- provided dependency of a Debezium extension, supposed to be added by users manually -->
+                                    <!-- Log4j -->
+                                    <dependency>log4j:log4j</dependency>
+                                    <!-- AssertJ -->
+                                    <dependency>org.assertj:assertj-core</dependency>
+                                </excludedDependencies>
+                            </bomGenerator>
+                            <descriptorGenerator>
+                                <overridesFile>${overridesfile}</overridesFile>
+                                <skipCategoryCheck>true</skipCategoryCheck>
+                                <ignoredArtifacts>
+                                    <!-- relocated to the Quarkiverse repo -->
+                                    <!-- Amazon services -->
+                                    <artifact>io.quarkus:quarkus-amazon-common</artifact>
+                                    <artifact>io.quarkus:quarkus-amazon-dynamodb</artifact>
+                                    <artifact>io.quarkus:quarkus-amazon-iam</artifact>
+                                    <artifact>io.quarkus:quarkus-amazon-kms</artifact>
+                                    <artifact>io.quarkus:quarkus-amazon-s3</artifact>
+                                    <artifact>io.quarkus:quarkus-amazon-secretsmanager</artifact>
+                                    <artifact>io.quarkus:quarkus-amazon-ses</artifact>
+                                    <artifact>io.quarkus:quarkus-amazon-sns</artifact>
+                                    <artifact>io.quarkus:quarkus-amazon-sqs</artifact>
+                                    <artifact>io.quarkus:quarkus-amazon-ssm</artifact>
+                                    <!-- Amazon Alexa -->
+                                    <artifact>io.quarkus:quarkus-amazon-alexa</artifact>
+                                    <!-- Tika -->
+                                    <artifact>io.quarkus:quarkus-tika</artifact>
+                                    <!-- JGit -->
+                                    <artifact>io.quarkus:quarkus-jgit</artifact>
+                                    <!-- JSch -->
+                                    <artifact>io.quarkus:quarkus-jsch</artifact>
+                                    <!-- Hibernate Search ORM Elasticsearch AWS -->
+                                    <artifact>io.quarkus:quarkus-hibernate-search-orm-elasticsearch-aws</artifact>
+                                    <!-- Artemis -->
+                                    <artifact>io.quarkus:quarkus-artemis-core</artifact>
+                                    <artifact>io.quarkus:quarkus-artemis-jms</artifact>
+                                    <!-- Consul config -->
+                                    <artifact>io.quarkus:quarkus-consul-config</artifact>
+                                    <!-- Logging Sentry -->
+                                    <artifact>io.quarkus:quarkus-logging-sentry</artifact>
+                                    <!-- Neo4j -->
+                                    <artifact>io.quarkus:quarkus-neo4j</artifact>
+                                    <!-- Vault -->
+                                    <artifact>io.quarkus:quarkus-vault</artifact>
+                                </ignoredArtifacts>
+                            </descriptorGenerator>
+                            <attachedMavenPlugin>
+                                <originalPluginCoords>io.quarkus:quarkus-maven-plugin:${quarkus.version}</originalPluginCoords>
+                                <targetPluginCoords>${platform.groupId}:quarkus-maven-plugin:${platform.version}</targetPluginCoords>
+                                <test>
+                                    <!-- Given the Maven plugin is rebuilt as part of the platform project, this is a basic test
+                                         that creates a new Quarkus application project with the 'create' goal targeting the platform version being built
+                                         (which will configure the platform Maven plugin) builds and tests the application with the 'verify` goal
+                                         to run both the unit and the integration tests -->
+                                    <artifact>io.quarkus:quarkus-platform-sample-app-test:${quarkus-platform-bom-generator.version}</artifact>
+                                    <maven-failsafe-plugin>true</maven-failsafe-plugin>
+                                    <!-- this test has been failing since it has been added so let's disable it for now -->
+                                    <skip>true</skip>
+                                    <systemProperties>
+                                        <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+                                        <quarkus.platform.group-id>${dollarSign}${dollarSign}{platform.groupId}</quarkus.platform.group-id>
+                                        <quarkus.platform.version>${dollarSign}${dollarSign}{platform.version}</quarkus.platform.version>
+                                        <maven.home>${dollarSign}${dollarSign}{maven.home}</maven.home>
+                                        <!-- this property is necessary to use the .flattened-pom.xml of the plugin instead of the original pom.xml -->
+                                        <quarkus.platform.maven-plugin.pom>${dollarSign}${dollarSign}{project.file.absolutePath}</quarkus.platform.maven-plugin.pom>
+                                        <!-- timeout in seconds for quarkus:create, the default is 10
+                                        <sample-app.generate-timeout>10</sample-app.generate-timeout -->
+                                        <!-- timeout in seconds for building the app and running its integration tests, the default is 30
+                                        <sample-app.build-timeout>30</sample-app.build-timeout -->
+                                    </systemProperties>
+                                    <skipNative>true</skipNative>
+                                </test>
+                            </attachedMavenPlugin>
+                        </platformConfig>
+                        <dependenciesToBuild /> <!-- to enable manifest generation -->
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>flatten-maven-plugin</artifactId>
+                    <version>1.2.7</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>io.quarkus</groupId>
+                <artifactId>quarkus-platform-bom-maven-plugin</artifactId>
+                <inherited>false</inherited>
+                <extensions>true</extensions>
+                <executions>
+                    <execution>
+                        <id>generate-platform-project</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>generate-platform-project</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>build-platform-project</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>invoke-platform-project</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <repositories>
+        <repository>
+            <id>central</id>
+            <name>Maven Repository Switchboard</name>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>gradle</id>
+            <name>Gradle releases repository</name>
+            <url>https://repo.gradle.org/artifactory/libs-releases</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <!-- Required for OpenSAML by quarkus-cxf-integration-test-ws-rm-client -->
+        <repository>
+            <id>shibboleth</id>
+            <url>https://build.shibboleth.net/maven/releases/</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <!-- Required for JIRA APIs -->
+        <repository>
+            <id>atlassian</id>
+            <url>https://maven.artifacts.atlassian.com/</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>gradle</id>
+            <url>https://repo.gradle.org/artifactory/libs-releases</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <profiles>
+        <profile>
+            <id>release</id>
+            <modules>
+                <!-- To properly push the generated platform project as part of the release, it has to be added as a module to make it visible
+                     to the release plugin which will then be able to transform the generated POMs -->
+                <module>generated-platform-project</module>
+            </modules>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-deploy-plugin</artifactId>
+                            <version>${maven-deploy-plugin.version}</version>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-gpg-plugin</artifactId>
+                            <version>${maven-gpg-plugin.version}</version>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-javadoc-plugin</artifactId>
+                            <version>${maven-javadoc-plugin.version}</version>
+                        </plugin>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-source-plugin</artifactId>
+                            <version>${maven-source-plugin.version}</version>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+                <plugins>
+                    <!-- Given that the generated platform project is included as a module in this profile,
+                         the platform invoker goal becomes redundant and can be disabled -->
+                    <plugin>
+                        <groupId>io.quarkus</groupId>
+                        <artifactId>quarkus-platform-bom-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>build-platform-project</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>invoke-platform-project</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>true</skip>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-release-plugin</artifactId>
+                        <configuration>
+                            <!-- After the release plugin has transformed all the POMs, we need to re-generate the platform configs (mainly to re-generated the POM properties)
+                                 taking into account the upcoming release version. Although this will happen at the `process-resources` phase anyway, this should be done
+                                 using the platform invoker goal (otherwise, some dependencies relying on the generated properties may fail to resolve).
+                                 Here we are deactivating the release profile to exclude the generated-platform-project module. -->
+                            <preparationGoals>clean verify -P !release -DrecordUpdatedBoms</preparationGoals>
+                            <completionGoals>process-resources -P !release</completionGoals>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <!--
+                        ## IMPORTANT ##
+                        In your ~/.m2/settings.xml you need to add and edit the following profile:
+                        <profile>
+                            <id>release</id>
+                            <properties>
+                                <gpg.useagent>false</gpg.useagent>
+                                <gpg.executable>/usr/local/Cellar/gnupg@1.4/1.4.23_1/bin/gpg1</gpg.executable> <- use gpg1 on Mac OS X <gpg.homedir>~/.gnupg</gpg.homedir>  <- Update to your own directory <gpg.passphrase>******</gpg.passphrase> <- Add your passphrase </properties>
+                        </profile>
+                         -->
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!--
+           | A convenience profile to re-generate the generated-platform-project before opening a PR
+        -->
+        <profile>
+            <id>sync</id>
+            <activation>
+                <property>
+                    <name>sync</name>
+                </property>
+            </activation>
+            <properties>
+                <quarkus.invoke-platform-project.skip>true</quarkus.invoke-platform-project.skip>
+            </properties>
+            <build>
+                <defaultGoal>clean process-resources</defaultGoal>
+            </build>
+        </profile>
+
+        <!--
+           | This profile enables SBOM generation for each platform member.
+           | This is still a work in progress.
+           | The SBOMs can be found under target/sbom directory.
+        -->
+        <profile>
+            <id>sbom</id>
+            <activation>
+                <property>
+                    <name>sbom</name>
+                </property>
+            </activation>
+            <build>
+                <defaultGoal>clean process-resources</defaultGoal>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>io.quarkus</groupId>
+                            <artifactId>quarkus-platform-bom-maven-plugin</artifactId>
+                            <configuration>
+                                <manifest>true</manifest>
+                                <includeNonManaged>true</includeNonManaged>
+                                <excludeParentPoms>true</excludeParentPoms>
+                                <legacyScmLocator>true</legacyScmLocator>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+
+        <profile>
+            <id>releaseCi</id>
+            <activation>
+                <property>
+                    <name>env.CI</name>
+                </property>
+            </activation>
+            <build>
+                <!-- Ideally, we should get rid of this <plugins> element but it will require work in the platform generator -->
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <configuration>
+                            <bestPractices>true</bestPractices>
+                            <useAgent>false</useAgent>
+                            <signer>bc</signer>
+                        </configuration>
+                    </plugin>
+                </plugins>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-gpg-plugin</artifactId>
+                            <configuration>
+                                <bestPractices>true</bestPractices>
+                                <useAgent>false</useAgent>
+                                <signer>bc</signer>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+        <profile>
+            <id>enableSnapshotsRepository</id>
+            <activation>
+                <property>
+                    <name>enableSnapshotsRepository</name>
+                </property>
+            </activation>
+            <repositories>
+                <repository>
+                    <id>quarkus-snapshots-repository</id>
+                    <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+                    <releases>
+                        <enabled>false</enabled>
+                    </releases>
+                    <snapshots>
+                        <enabled>true</enabled>
+                    </snapshots>
+                </repository>
+                <repository>
+                    <id>quarkus-legacy-snapshots-repository</id>
+                    <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
+                    <releases>
+                        <enabled>false</enabled>
+                    </releases>
+                    <snapshots>
+                        <enabled>true</enabled>
+                    </snapshots>
+                </repository>
+            </repositories>
+        </profile>
+    </profiles>
+
+</project>

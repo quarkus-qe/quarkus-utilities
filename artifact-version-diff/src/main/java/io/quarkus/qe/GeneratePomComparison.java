@@ -1,5 +1,6 @@
 package io.quarkus.qe;
 
+import io.quarkus.qe.utils.Configuration;
 import org.apache.maven.model.Dependency;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
@@ -53,8 +54,8 @@ public class GeneratePomComparison {
                 """;
     private static final Logger LOG = Logger.getLogger(GeneratePomComparison.class.getName());
 
-    public GeneratePomComparison(AllowedArtifacts allowedArtifactsFile) throws IOException, XmlPullParserException {
-        pomComparator = new PomComparator();
+    public GeneratePomComparison(AllowedArtifacts allowedArtifactsFile, Configuration config) throws IOException, XmlPullParserException {
+        pomComparator = new PomComparator(config);
         pomComparator.comparePoms();
         this.allowedArtifactsFile = allowedArtifactsFile;
     }
@@ -65,11 +66,11 @@ public class GeneratePomComparison {
      * The output is saved to platformBomComparison.html
      * There is need to check if `allowedArtifactsFile` is not null otherwise the exception is thrown.
      */
-    public void generatePomComparisonReport() {
+    public void generatePomComparisonReport(Configuration config) {
         LOG.info("Generating platform bom comparison report");
         try(FileWriter fw = new FileWriter("platformBomComparison.html")) {
-            fw.write(HTML_BASE_START.replace("substitute-quarkus-upstream", PrepareOperation.upstreamVersion)
-                    .replace("substitute-quarkus-rhbq", PrepareOperation.rhbqVersion));
+            fw.write(HTML_BASE_START.replace("substitute-quarkus-upstream", config.getUpstreamVersion())
+                    .replace("substitute-quarkus-rhbq", config.getRHBQVersion()));
 
             fw.write("<h2>RHBQ BOM - missing artifacts</h2>\n<table>");
             fw.write(generateDifferArtifacts(pomComparator.getMissingDependencies(),
